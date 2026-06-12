@@ -87,9 +87,6 @@ kubectl rollout status deployment/kube-prometheus-stack-grafana -n "${NAMESPACE}
 GATEWAY_CLASS=$(kubectl get gatewayclass cilium -o name 2>/dev/null || true)
 
 if [[ -n "${GATEWAY_CLASS}" ]]; then
-    echo "-> Creating Gateway..."
-    kubectl apply -f "${SCRIPT_DIR}/gateway.yaml"
-
     echo "-> Creating HTTPRoute..."
     export GATEWAY_HOST
     HTTPROUTE_YAML="$(mktemp)"

@@ -8,4 +8,17 @@ spec:
   listeners:
     - name: http
       protocol: HTTP
-      port: 8081
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: llama-server-tls
+      allowedRoutes:
+        namespaces:
+          from: Same

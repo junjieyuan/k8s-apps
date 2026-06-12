@@ -115,6 +115,20 @@ else
     rm -f "$HTTPROUTE_YAML"
 
     echo "  Gateway address: $(kubectl get gateway llama-server -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo '<pending>')"
+
+    echo "-> Checking cert-manager..."
+    if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then
+        echo "  cert-manager CRDs found"
+        echo "-> Creating Certificate..."
+        CERTIFICATE_YAML="$(mktemp)"
+        trap "rm -f \"$CERTIFICATE_YAML\"" EXIT
+        envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/certificate.yaml" > "$CERTIFICATE_YAML"
+        kubectl apply -f "$CERTIFICATE_YAML"
+        rm -f "$CERTIFICATE_YAML"
+    else
+        echo "  cert-manager not installed — skipping TLS Certificate." >&2
+        echo "  Run ../cert-manager/install.sh first to enable HTTPS." >&2
+    fi
 fi
 
 # Wait for readiness
@@ -127,4 +141,7 @@ echo "  Namespace: ${NAMESPACE}"
 echo "  Health:    kubectl exec -n ${NAMESPACE} deployment/llama-server -- curl -s http://localhost:8080/health"
 if [[ -n "${GATEWAY_CLASS:-}" ]]; then
     echo "  Gateway:   http://${GATEWAY_HOST}"
+    if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then
+        echo "  Gateway:   https://${GATEWAY_HOST}"
+    fi
 fi

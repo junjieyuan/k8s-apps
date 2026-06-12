@@ -11,8 +11,10 @@ for VM provisioning, kubeadm init/join, CNI/CSI/GPU operator installation.
 
 - **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never introduce
   Python, Node, or other languages for deployment scripts.
-- **No package managers** — `kubectl` is the only runtime dependency.
-  Helm is used selectively where it provides clear value (e.g. operators).
+- **`kubectl` is the primary tool** for resource management.
+- **Helm** is allowed for operators and complex charts where `values.yaml`
+  provides clear advantage over raw manifests (e.g. cert-manager, GPU operator).
+  Application workloads default to plain YAML + `kubectl`.
 
 ## Code style
 

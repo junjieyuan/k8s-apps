@@ -27,8 +27,11 @@ No root escalation needed (cluster access is role-based).
 
 ## Secrets
 
-- `secret.yaml` is gitignored. Template files use `secret.yaml.example` with
-  placeholder values. Real credentials or API keys are never committed.
+**Separate secrets from code.** Real values live in gitignored files
+(`secret.yaml`, credentials, etc.). Committed files use `.example` variants
+with placeholder values only. This keeps secrets out of git history and
+allows each environment to supply its own values.
+
 - `models.ini` may contain public HuggingFace repo references — that is fine.
 
 **Absolute prohibition:** never commit any secret, key, password, token,

@@ -41,6 +41,30 @@ certificate, or credential to this repository. This includes but is not
 limited to API keys, SSH private keys, TLS certificates, kubeconfig files,
 and database credentials.
 
+## Component versions
+
+- **Always target latest stable** — pin explicit versions (e.g. `v1.20.2`, not
+  `latest`), but keep them current. Check upstream releases before deployment.
+- **Helm charts** — use `--version` to pin chart version matching the app version.
+  Store chart-specific values in `values.yaml` for each operator.
+- **CRDs** — install from upstream release artifacts with explicit version URLs
+  (e.g. Gateway API `standard-install.yaml`). Never copy CRD manifests into this repo.
+- **Gateway API** — CRD version must match the version supported by the CNI
+  (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
+
+## Best practices
+
+- **Operators via Helm** — cert-manager, GPU operator, CSI drivers. Declarative
+  configuration in `values.yaml` + `install.sh` as the entry point.
+- **Application workloads via kubectl** — plain YAML manifests, `envsubst` for
+  templating, no Helm or Kustomize.
+- **Gateway API over Ingress** — use `Gateway` + `HTTPRoute` from
+  `gateway.networking.k8s.io/v1`, not `networking.k8s.io/v1` Ingress.
+- **TLS via cert-manager** — `ClusterIssuer` + `Certificate` resources for
+  automatic Let's Encrypt provisioning and renewal.
+- **Secrets never committed** — use `.example` files with placeholders, pass real
+  values via CLI flags or gitignored files.
+
 ## Commit conventions
 
 - Atomic commits with conventional prefixes: `feat:`, `fix:`, `refactor:`, `docs:`

@@ -90,20 +90,11 @@ if [[ -n "${GATEWAY_CLASS}" ]]; then
     echo "-> Creating HTTPRoute..."
     export GATEWAY_HOST
     HTTPROUTE_YAML="$(mktemp)"
-    CERTIFICATE_YAML=""
-    cleanup() { rm -f "$HTTPROUTE_YAML" ${CERTIFICATE_YAML:+"$CERTIFICATE_YAML"}; }
+    cleanup() { rm -f "$HTTPROUTE_YAML"; }
     trap cleanup EXIT
     envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/httproute.yaml" > "$HTTPROUTE_YAML"
     kubectl apply -f "$HTTPROUTE_YAML"
     rm -f "$HTTPROUTE_YAML"
-
-    if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then
-        echo "-> Creating Certificate..."
-        CERTIFICATE_YAML="$(mktemp)"
-        envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/certificate.yaml" > "$CERTIFICATE_YAML"
-        kubectl apply -f "$CERTIFICATE_YAML"
-        rm -f "$CERTIFICATE_YAML"
-    fi
 fi
 
 echo ""

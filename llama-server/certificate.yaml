@@ -10,3 +10,4 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - ${GATEWAY_HOST}
+    - grafana.k8s.junjie.pro

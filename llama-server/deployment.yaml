@@ -24,8 +24,8 @@ spec:
           type: spc_t
       containers:
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server-cuda-b9603
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/ggml-org/llama.cpp:server-cuda
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http

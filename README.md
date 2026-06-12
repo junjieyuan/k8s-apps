@@ -12,22 +12,25 @@ Managed via `kubectl` apply scripts, not Helm charts.
 ## Prerequisites
 
 - Running Kubernetes cluster (provisioned by [`k8s-cluster`](https://github.com/junjieyuan/k8s-cluster))
+- Gateway API CRDs + Cilium CNI (from `k8s-cluster`)
+- cert-manager (from `k8s-cluster`) — required for TLS; optional for HTTP-only
 - GPU worker node(s) with NVIDIA GPU labels (`pci-10de.present=true`)
-- Cilium CNI with Gateway API + kube-proxy replacement + LB-IPAM
 - `kubectl` configured
 
 ## Usage
 
 ```bash
+# Deploy with HTTP + auto-issued TLS certificate
 bash llama-server/install.sh --api-key $(uuidgen)
+
+# Custom hostname
 bash llama-server/install.sh --api-key $(uuidgen) --host llama.example.com
 ```
 
 ## Architecture
 
 ```
-External → LB IP → Cilium Gateway (Envoy)
-  → HTTPRoute (per-app hostname)
-  → Service (ClusterIP)
-  → Pod (GPU/CPU)
+External → LB IP → Cilium Gateway
+  ├─ HTTP (port 80) → HTTPRoute → Service → Pod
+  └─ HTTPS (port 443, TLS termination via cert-manager) → HTTPRoute → Service → Pod
 ```

@@ -4,8 +4,8 @@
 
 This repo manages Kubernetes application workloads running on an existing
 k8s cluster. It is NOT responsible for cluster provisioning — that lives
-in the **`k8s-cluster`** repo (`~/Projects/k8s-cluster`). See that repo
-for VM provisioning, kubeadm init/join, CNI/CSI/GPU operator installation.
+in the **`k8s-cluster`** repo. See that repo for VM provisioning, kubeadm
+init/join, CNI/CSI/GPU operator, cert-manager, and external-dns installation.
 
 **This repo is for application workloads only.** Cluster-level infrastructure
 (CNI, CSI, GPU operator, cert-manager, external-dns) belongs in `k8s-cluster`.
@@ -16,6 +16,25 @@ HTTPRoutes, certificates) live here.
 running in the cluster must have a corresponding manifest or values file in this
 repo. No manual `kubectl` edits on the cluster that aren't reflected back into
 code. When in doubt, re-run `install.sh` to verify idempotency.
+
+## Directory structure
+
+Each application lives in its own directory with an `install.sh` entry point:
+
+```
+<app-name>/
+├── install.sh              # entry point, deploys all resources
+├── namespace.yaml           # Namespace
+├── deployment.yaml          # Deployment
+├── service.yaml             # Service (ClusterIP)
+├── gateway.yaml             # Gateway (Cilium Gateway API)
+├── httproute.yaml           # HTTPRoute (uses ${GATEWAY_HOST} template)
+├── certificate.yaml         # Certificate (cert-manager, uses ${GATEWAY_HOST} template)
+├── persistentvolume.yaml    # PersistentVolume (optional)
+├── persistentvolumeclaim.yaml  # PersistentVolumeClaim (optional)
+├── secret.yaml.example      # Secret template (never commit real values)
+└── models.ini               # Config file (optional)
+```
 
 ## Tool constraints
 
@@ -55,10 +74,8 @@ and database credentials.
 
 - **Always target latest stable** — pin explicit versions (e.g. `v1.20.2`, not
   `latest`), but keep them current. Check upstream releases before deployment.
-- **Helm charts** — use `--version` to pin chart version matching the app version.
-  Store chart-specific values in `values.yaml` for each operator.
-- **CRDs** — install from upstream release artifacts with explicit version URLs
-  (e.g. Gateway API `standard-install.yaml`). Never copy CRD manifests into this repo.
+- **Container images** — pin by SHA256 digest or explicit build tag (e.g.
+  `server-cuda-b9603`, not `server-cuda`). Never use floating tags.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 
@@ -81,11 +98,7 @@ and database credentials.
 - **Always use `install.sh` to deploy** — never `kubectl apply -f` directly on
   YAML files that contain `${VAR}` placeholders. The install script handles
   `envsubst` substitution via temporary files. Direct apply will pass literals
-  like `${DOMAIN_FILTER}` to the controller, causing silent misconfiguration.
-- **Verify RBAC against upstream docs** — controllers like external-dns often
-  require `get/list/watch` on `namespaces` in addition to their primary
-  resources. Missing permissions cause crash loops with `forbidden` errors.
-  Check the component's official RBAC manifest, don't guess.
+  like `${GATEWAY_HOST}` to the controller, causing silent misconfiguration.
 
 ## Commit conventions
 

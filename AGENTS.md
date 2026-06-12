@@ -28,9 +28,13 @@ No root escalation needed (cluster access is role-based).
 ## Secrets
 
 - `secret.yaml` is gitignored. Template files use `secret.yaml.example` with
-  placeholder values.
-- Real credentials or API keys are never committed.
+  placeholder values. Real credentials or API keys are never committed.
 - `models.ini` may contain public HuggingFace repo references — that is fine.
+
+**Absolute prohibition:** never commit any secret, key, password, token,
+certificate, or credential to this repository. This includes but is not
+limited to API keys, SSH private keys, TLS certificates, kubeconfig files,
+and database credentials.
 
 ## Commit conventions
 

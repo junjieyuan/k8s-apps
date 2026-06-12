@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: llama-server
+  namespace: llama-server
+spec:
+  selector:
+    matchLabels:
+      app: llama-server
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      params:
+        model:
+          - Qwen-3.6-35B-A3B
+      bearerTokenSecret:
+        name: llama-server-key
+        key: LLAMA_API_KEY

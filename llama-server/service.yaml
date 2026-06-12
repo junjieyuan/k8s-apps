@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: llama-server
   namespace: llama-server
+  labels:
+    app: llama-server
 spec:
   selector:
     app: llama-server

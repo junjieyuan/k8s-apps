@@ -48,6 +48,8 @@ spec:
               value: "1"
             - name: LLAMA_ARG_MODELS_PRESET
               value: /etc/llama-server/models.ini
+            - name: LLAMA_ARG_ENDPOINT_METRICS
+              value: "1"
             - name: LLAMA_OFFLINE
               value: "1"
           envFrom:

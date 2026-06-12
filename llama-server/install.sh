@@ -93,6 +93,12 @@ kubectl apply -f "${SCRIPT_DIR}/deployment.yaml"
 echo "-> Creating Service..."
 kubectl apply -f "${SCRIPT_DIR}/service.yaml"
 
+# ServiceMonitor (for Prometheus)
+if kubectl get crd servicemonitors.monitoring.coreos.com >/dev/null 2>&1; then
+    echo "-> Creating ServiceMonitor..."
+    kubectl apply -f "${SCRIPT_DIR}/servicemonitor.yaml"
+fi
+
 # Gateway
 echo "-> Checking GatewayClass..."
 GATEWAY_CLASS=$(kubectl get gatewayclass cilium -o name 2>/dev/null || true)

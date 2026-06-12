@@ -19,17 +19,21 @@ code. When in doubt, re-run `install.sh` to verify idempotency.
 
 ## Directory structure
 
-Each application lives in its own directory with an `install.sh` entry point:
+Each application lives in its own directory with an `install.sh` entry point.
+Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
 ```
+gateway/
+├── install.sh              # deploys shared Gateway + TLS Certificate
+├── gateway.yaml             # Gateway (Cilium Gateway API, allows routes from all ns)
+└── certificate.yaml         # Certificate (cert-manager, uses ${GATEWAY_HOSTS} template)
+
 <app-name>/
 ├── install.sh              # entry point, deploys all resources
 ├── namespace.yaml           # Namespace
 ├── deployment.yaml          # Deployment
 ├── service.yaml             # Service (ClusterIP)
-├── gateway.yaml             # Gateway (Cilium Gateway API)
-├── httproute.yaml           # HTTPRoute (uses ${GATEWAY_HOST} template)
-├── certificate.yaml         # Certificate (cert-manager, uses ${GATEWAY_HOST} template)
+├── httproute.yaml           # HTTPRoute (uses ${GATEWAY_HOST} template, refs shared Gateway)
 ├── persistentvolume.yaml    # PersistentVolume (optional)
 ├── persistentvolumeclaim.yaml  # PersistentVolumeClaim (optional)
 ├── secret.yaml.example      # Secret template (never commit real values)
@@ -74,8 +78,9 @@ and database credentials.
 
 - **Always target latest stable** — pin explicit versions (e.g. `v1.20.2`, not
   `latest`), but keep them current. Check upstream releases before deployment.
-- **Container images** — pin by SHA256 digest or explicit build tag (e.g.
-  `server-cuda-b9603`, not `server-cuda`). Never use floating tags.
+- **Container images** — prefer explicit build tags (e.g. `server-cuda-b9603`), but
+  floating tags (e.g. `server-cuda`) are acceptable when paired with
+  `imagePullPolicy: Always` and regular restart cycles.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 

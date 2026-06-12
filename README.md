@@ -1,13 +1,15 @@
 # k8s-apps
 
 Kubernetes application workloads deployed on the [k8s-cluster](https://github.com/junjieyuan/k8s-cluster).
-Managed via `kubectl` apply scripts, not Helm charts.
+Managed via `kubectl` apply scripts and Helm charts.
 
 ## Applications
 
 | App | Description | Stack |
 |-----|-------------|-------|
+| **gateway** | Shared Cilium Gateway + TLS certificate for all apps | Cilium Gateway API, cert-manager |
 | **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Cilium Gateway API |
+| **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Helm, Cilium Gateway API |
 
 ## Prerequisites
 
@@ -20,17 +22,25 @@ Managed via `kubectl` apply scripts, not Helm charts.
 ## Usage
 
 ```bash
-# Deploy with HTTP + auto-issued TLS certificate
-bash llama-server/install.sh --api-key $(uuidgen)
+# 1. Deploy the shared Gateway + TLS certificate first
+bash gateway/install.sh
+# Or with custom hostnames:
+bash gateway/install.sh --hosts llama.k8s.junjie.pro,grafana.k8s.junjie.pro
 
-# Custom hostname
+# 2. Deploy applications
+bash llama-server/install.sh --api-key $(uuidgen)
+bash monitoring/install.sh --grafana-password $(uuidgen)
+
+# Custom hostnames
 bash llama-server/install.sh --api-key $(uuidgen) --host llama.example.com
+bash monitoring/install.sh --grafana-password $(uuidgen) --host grafana.example.com
 ```
 
 ## Architecture
 
 ```
-External → LB IP → Cilium Gateway
-  ├─ HTTP (port 80) → HTTPRoute → Service → Pod
-  └─ HTTPS (port 443, TLS termination via cert-manager) → HTTPRoute → Service → Pod
+External → LB IP (192.168.122.200) → Cilium Gateway (shared, All namespace routing)
+  ├─ HTTP (port 80)  → HTTPRoute[host: llama.k8s.junjie.pro]   → llama-server
+  │                  → HTTPRoute[host: grafana.k8s.junjie.pro]  → monitoring/grafana
+  └─ HTTPS (port 443, TLS via cert-manager, SANs: both hosts)   → same
 ```

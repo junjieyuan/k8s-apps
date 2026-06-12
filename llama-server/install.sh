@@ -109,7 +109,9 @@ else
     echo "-> Creating HTTPRoute..."
     export GATEWAY_HOST
     HTTPROUTE_YAML="$(mktemp)"
-    trap "rm -f \"$HTTPROUTE_YAML\"" EXIT
+    CERTIFICATE_YAML=""
+    cleanup() { rm -f "$HTTPROUTE_YAML" ${CERTIFICATE_YAML:+"$CERTIFICATE_YAML"}; }
+    trap cleanup EXIT
     envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/httproute.yaml" > "$HTTPROUTE_YAML"
     kubectl apply -f "$HTTPROUTE_YAML"
     rm -f "$HTTPROUTE_YAML"
@@ -121,13 +123,12 @@ else
         echo "  cert-manager CRDs found"
         echo "-> Creating Certificate..."
         CERTIFICATE_YAML="$(mktemp)"
-        trap "rm -f \"$CERTIFICATE_YAML\"" EXIT
         envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/certificate.yaml" > "$CERTIFICATE_YAML"
         kubectl apply -f "$CERTIFICATE_YAML"
         rm -f "$CERTIFICATE_YAML"
     else
         echo "  cert-manager not installed — skipping TLS Certificate." >&2
-        echo "  Run ../cert-manager/install.sh first to enable HTTPS." >&2
+        echo "  Install cert-manager from the k8s-cluster repo first to enable HTTPS." >&2
     fi
 fi
 

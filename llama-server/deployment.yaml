@@ -24,7 +24,7 @@ spec:
           type: spc_t
       containers:
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server-cuda-b9603
+          image: ghcr.io/ggml-org/llama.cpp:server-cuda
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -33,8 +33,8 @@ spec:
             limits:
               nvidia.com/gpu: 1
               memory: 32Gi
-              cpu: 8
             requests:
+              nvidia.com/gpu: 1
               memory: 16Gi
               cpu: 2
           env:

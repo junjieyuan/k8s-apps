@@ -1,0 +1,4 @@
+.env
+*.ign
+secret.yaml
+kubeconfig*

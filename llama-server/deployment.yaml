@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-server
+  namespace: llama-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: llama-server
+  template:
+    metadata:
+      labels:
+        app: llama-server
+    spec:
+      nodeSelector:
+        nvidia.com/gpu: "true"
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server-cuda
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: 32Gi
+              cpu: 8
+            requests:
+              memory: 16Gi
+              cpu: 2
+          env:
+            - name: LLAMA_ARG_CACHE_TYPE_K
+              value: q8_0
+            - name: LLAMA_ARG_CACHE_TYPE_V
+              value: q8_0
+            - name: LLAMA_ARG_LOG_VERBOSITY
+              value: "4"
+            - name: LLAMA_ARG_MODELS_MAX
+              value: "1"
+            - name: LLAMA_ARG_MODELS_PRESET
+              value: /etc/llama-server/models.ini
+            - name: LLAMA_OFFLINE
+              value: "1"
+          envFrom:
+            - secretRef:
+                name: llama-server-key
+          volumeMounts:
+            - name: config
+              mountPath: /etc/llama-server
+              readOnly: true
+            - name: models
+              mountPath: /root/.cache/huggingface/hub
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: models-config
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-models

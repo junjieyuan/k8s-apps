@@ -2,3 +2,12 @@
 *.ign
 secret.yaml
 kubeconfig*
+*.key
+*.crt
+*.pem
+*.p12
+*.pfx
+*.swp
+*.swo
+*~
+.DS_Store

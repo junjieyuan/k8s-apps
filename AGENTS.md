@@ -7,6 +7,11 @@ k8s cluster. It is NOT responsible for cluster provisioning — that lives
 in the **`k8s-cluster`** repo (`~/Projects/k8s-cluster`). See that repo
 for VM provisioning, kubeadm init/join, CNI/CSI/GPU operator installation.
 
+**The repo must be in full sync with the cluster** — every resource running
+in the cluster must have a corresponding manifest or values file in this repo.
+No manual `kubectl` edits on the cluster that aren't reflected back into code.
+When in doubt, re-run `install.sh` to verify idempotency.
+
 ## Tool constraints
 
 - **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never introduce

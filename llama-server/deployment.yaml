@@ -16,7 +16,7 @@ spec:
         app: llama-server
     spec:
       nodeSelector:
-        nvidia.com/gpu: "true"
+        nvidia.com/gpu.present: "true"
       containers:
         - name: llama-server
           image: ghcr.io/ggml-org/llama.cpp:server-cuda

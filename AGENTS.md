@@ -7,10 +7,15 @@ k8s cluster. It is NOT responsible for cluster provisioning — that lives
 in the **`k8s-cluster`** repo (`~/Projects/k8s-cluster`). See that repo
 for VM provisioning, kubeadm init/join, CNI/CSI/GPU operator installation.
 
-**The repo must be in full sync with the cluster** — every resource running
-in the cluster must have a corresponding manifest or values file in this repo.
-No manual `kubectl` edits on the cluster that aren't reflected back into code.
-When in doubt, re-run `install.sh` to verify idempotency.
+**This repo is for application workloads only.** Cluster-level infrastructure
+(CNI, CSI, GPU operator, cert-manager, external-dns) belongs in `k8s-cluster`.
+Only user-facing services and their resources (deployments, services, gateways,
+HTTPRoutes, certificates) live here.
+
+**The repo must be in full sync with the cluster** — every application resource
+running in the cluster must have a corresponding manifest or values file in this
+repo. No manual `kubectl` edits on the cluster that aren't reflected back into
+code. When in doubt, re-run `install.sh` to verify idempotency.
 
 ## Tool constraints
 
@@ -59,8 +64,6 @@ and database credentials.
 
 ## Best practices
 
-- **Operators via Helm** — cert-manager, GPU operator, CSI drivers. Declarative
-  configuration in `values.yaml` + `install.sh` as the entry point.
 - **Application workloads via kubectl** — plain YAML manifests, `envsubst` for
   templating, no Helm or Kustomize.
 - **Gateway API over Ingress** — use `Gateway` + `HTTPRoute` from
@@ -69,6 +72,20 @@ and database credentials.
   automatic Let's Encrypt provisioning and renewal.
 - **Secrets never committed** — use `.example` files with placeholders, pass real
   values via CLI flags or gitignored files.
+
+## Debugging deployments
+
+- **After deploying any new component, immediately check logs** for E/F-level
+  errors: `kubectl logs -n <namespace> deployment/<name>`. CrashLoop/BackOff
+  must be investigated before moving on.
+- **Always use `install.sh` to deploy** — never `kubectl apply -f` directly on
+  YAML files that contain `${VAR}` placeholders. The install script handles
+  `envsubst` substitution via temporary files. Direct apply will pass literals
+  like `${DOMAIN_FILTER}` to the controller, causing silent misconfiguration.
+- **Verify RBAC against upstream docs** — controllers like external-dns often
+  require `get/list/watch` on `namespaces` in addition to their primary
+  resources. Missing permissions cause crash loops with `forbidden` errors.
+  Check the component's official RBAC manifest, don't guess.
 
 ## Commit conventions
 

@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: llama-server
+  namespace: llama-server
+spec:
+  ingressClassName: cilium
+  rules:
+    - host: ${INGRESS_HOST}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: llama-server
+                port:
+                  number: 8080

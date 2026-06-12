@@ -8,11 +8,11 @@ usage() {
     cat <<'EOF'
 Usage: install.sh [OPTIONS]
 
-Deploy llama-server on GPU worker nodes. Exposes the server via Cilium Gateway API.
+Deploy llama-server on GPU worker nodes. Exposes the server via Cilium Ingress.
 
 Options:
   --api-key KEY       LLAMA_API_KEY secret value (generate with: uuidgen)
-  --host HOSTNAME     Gateway HTTPRoute hostname (default: llama.k8s.junjie.pro)
+  --host HOSTNAME     Ingress hostname (default: llama.k8s.junjie.pro)
   --dry-run           Print resources without applying
   --help              Show this help
 EOF
@@ -20,13 +20,13 @@ EOF
 }
 
 API_KEY=""
-GATEWAY_HOST="llama.k8s.junjie.pro"
+INGRESS_HOST="llama.k8s.junjie.pro"
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --api-key) API_KEY="$2";         shift 2 ;;
-        --host)    GATEWAY_HOST="$2";    shift 2 ;;
+        --host)    INGRESS_HOST="$2";    shift 2 ;;
         --dry-run) DRY_RUN=true;         shift ;;
         --help)    usage 0 ;;
         *)         echo "Unknown option: $1" >&2; usage 1 ;;
@@ -93,27 +93,22 @@ kubectl apply -f "${SCRIPT_DIR}/deployment.yaml"
 echo "-> Creating Service..."
 kubectl apply -f "${SCRIPT_DIR}/service.yaml"
 
-# Gateway
-echo "-> Checking Gateway API availability..."
-GATEWAY_CLASS=$(kubectl get gatewayclass cilium -o name 2>/dev/null || true)
+# Ingress
+echo "-> Checking IngressClass..."
+INGRESS_CLASS=$(kubectl get ingressclass cilium -o name 2>/dev/null || true)
 
-if [[ -z "$GATEWAY_CLASS" ]]; then
-    echo "  Warning: GatewayClass 'cilium' not found. Enable with: cilium upgrade --set gatewayAPI.enabled=true" >&2
+if [[ -z "$INGRESS_CLASS" ]]; then
+    echo "  Warning: IngressClass 'cilium' not found. Enable with: cilium upgrade --set ingressController.enabled=true" >&2
 else
-    echo "  GatewayClass: cilium, host: ${GATEWAY_HOST}"
+    echo "  IngressClass: cilium, host: ${INGRESS_HOST}"
 
-    echo "-> Creating Gateway..."
-    kubectl apply -f "${SCRIPT_DIR}/gateway.yaml"
-
-    echo "-> Creating HTTPRoute..."
-    export GATEWAY_HOST
-    HTTPROUTE_YAML="$(mktemp)"
-    trap "rm -f \"$HTTPROUTE_YAML\"" EXIT
-    envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/httproute.yaml" > "$HTTPROUTE_YAML"
-    kubectl apply -f "$HTTPROUTE_YAML"
-    rm -f "$HTTPROUTE_YAML"
-
-    echo "  Gateway will be available at http://${GATEWAY_HOST} (check external IP with: kubectl get gateway -n ${NAMESPACE})"
+    echo "-> Creating Ingress..."
+    export INGRESS_HOST
+    INGRESS_YAML="$(mktemp)"
+    trap "rm -f \"$INGRESS_YAML\"" EXIT
+    envsubst '$INGRESS_HOST' < "${SCRIPT_DIR}/ingress.yaml" > "$INGRESS_YAML"
+    kubectl apply -f "$INGRESS_YAML"
+    rm -f "$INGRESS_YAML"
 fi
 
 # Wait for readiness
@@ -124,6 +119,6 @@ echo ""
 echo "llama-server deployed."
 echo "  Namespace: ${NAMESPACE}"
 echo "  Health:    kubectl exec -n ${NAMESPACE} deployment/llama-server -- curl -s http://localhost:8080/health"
-if [[ -n "${GATEWAY_CLASS:-}" ]]; then
-    echo "  Gateway:   http://${GATEWAY_HOST}"
+if [[ -n "${INGRESS_CLASS:-}" ]]; then
+    echo "  Ingress:   http://${INGRESS_HOST}"
 fi

@@ -4,7 +4,8 @@
 
 This repo manages Kubernetes application workloads running on an existing
 k8s cluster. It is NOT responsible for cluster provisioning — that lives
-in the `k8s-cluster` repo.
+in the **`k8s-cluster`** repo (`~/Projects/k8s-cluster`). See that repo
+for VM provisioning, kubeadm init/join, CNI/CSI/GPU operator installation.
 
 ## Tool constraints
 

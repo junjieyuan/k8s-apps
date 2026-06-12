@@ -9,5 +9,5 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-    - ${GATEWAY_HOST}
+    - llama.k8s.junjie.pro
     - grafana.k8s.junjie.pro

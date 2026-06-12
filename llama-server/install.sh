@@ -99,43 +99,21 @@ if kubectl get crd servicemonitors.monitoring.coreos.com >/dev/null 2>&1; then
     kubectl apply -f "${SCRIPT_DIR}/servicemonitor.yaml"
 fi
 
-# Gateway
-echo "-> Checking GatewayClass..."
-GATEWAY_CLASS=$(kubectl get gatewayclass cilium -o name 2>/dev/null || true)
-
-if [[ -z "$GATEWAY_CLASS" ]]; then
-    echo "  Warning: GatewayClass 'cilium' not found. Install Gateway API CRDs and enable with:" >&2
-    echo "    cilium upgrade --set gatewayAPI.enabled=true --set kubeProxyReplacement=true" >&2
+# HTTPRoute (via shared Gateway)
+echo "-> Checking Gateway..."
+if ! kubectl get gateway llama-server -n "${NAMESPACE}" >/dev/null 2>&1; then
+    echo "  Warning: Gateway 'llama-server' not found. Run ../gateway/install.sh first." >&2
 else
-    echo "  GatewayClass: cilium"
-
-    echo "-> Creating Gateway..."
-    kubectl apply -f "${SCRIPT_DIR}/gateway.yaml"
+    echo "  Gateway: $(kubectl get gateway llama-server -n "${NAMESPACE}" -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo '<pending>')"
 
     echo "-> Creating HTTPRoute..."
     export GATEWAY_HOST
     HTTPROUTE_YAML="$(mktemp)"
-    CERTIFICATE_YAML=""
-    cleanup() { rm -f "$HTTPROUTE_YAML" ${CERTIFICATE_YAML:+"$CERTIFICATE_YAML"}; }
+    cleanup() { rm -f "$HTTPROUTE_YAML"; }
     trap cleanup EXIT
     envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/httproute.yaml" > "$HTTPROUTE_YAML"
     kubectl apply -f "$HTTPROUTE_YAML"
     rm -f "$HTTPROUTE_YAML"
-
-    echo "  Gateway address: $(kubectl get gateway llama-server -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo '<pending>')"
-
-    echo "-> Checking cert-manager..."
-    if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then
-        echo "  cert-manager CRDs found"
-        echo "-> Creating Certificate..."
-        CERTIFICATE_YAML="$(mktemp)"
-        envsubst '$GATEWAY_HOST' < "${SCRIPT_DIR}/certificate.yaml" > "$CERTIFICATE_YAML"
-        kubectl apply -f "$CERTIFICATE_YAML"
-        rm -f "$CERTIFICATE_YAML"
-    else
-        echo "  cert-manager not installed — skipping TLS Certificate." >&2
-        echo "  Install cert-manager from the k8s-cluster repo first to enable HTTPS." >&2
-    fi
 fi
 
 # Wait for readiness
@@ -146,9 +124,5 @@ echo ""
 echo "llama-server deployed."
 echo "  Namespace: ${NAMESPACE}"
 echo "  Health:    kubectl exec -n ${NAMESPACE} deployment/llama-server -- curl -s http://localhost:8080/health"
-if [[ -n "${GATEWAY_CLASS:-}" ]]; then
-    echo "  Gateway:   http://${GATEWAY_HOST}"
-    if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then
-        echo "  Gateway:   https://${GATEWAY_HOST}"
-    fi
-fi
+echo "  Gateway:   https://${GATEWAY_HOST}"
+echo "  Gateway:   http://${GATEWAY_HOST}"

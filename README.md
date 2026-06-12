@@ -5,9 +5,9 @@ Managed via `kubectl` apply scripts, not Helm charts.
 
 ## Applications
 
-- **llama-server** — llama.cpp inference server with NVIDIA GPU (RTX 4080).
-  Serves Gemma 4 and Qwen 3.6 models via OpenAI-compatible API.
-  Exposed through Cilium Gateway API with HTTPRoute.
+| App | Description | Stack |
+|-----|-------------|-------|
+| **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Cilium Gateway API |
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ bash llama-server/install.sh --api-key $(uuidgen) --host llama.example.com
 ## Architecture
 
 ```
-External → LB 192.168.122.200:8081 → Cilium Gateway (Envoy)
-  → HTTPRoute (host: llama.k8s.junjie.pro)
-  → llama-server ClusterIP :8080
-  → Pod (GPU, RTX 4080)
+External → LB IP → Cilium Gateway (Envoy)
+  → HTTPRoute (per-app hostname)
+  → Service (ClusterIP)
+  → Pod (GPU/CPU)
 ```

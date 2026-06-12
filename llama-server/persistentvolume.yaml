@@ -15,5 +15,7 @@ spec:
     required:
       nodeSelectorTerms:
         - matchExpressions:
-            - key: nvidia.com/gpu
-              operator: Exists
+            - key: nvidia.com/gpu.present
+              operator: In
+              values:
+                - "true"

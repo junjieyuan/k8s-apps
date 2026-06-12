@@ -17,6 +17,11 @@ spec:
     spec:
       nodeSelector:
         nvidia.com/gpu.present: "true"
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seLinuxOptions:
+          type: spc_t
       containers:
         - name: llama-server
           image: ghcr.io/ggml-org/llama.cpp:server-cuda

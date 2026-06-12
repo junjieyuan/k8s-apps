@@ -40,8 +40,8 @@ if ! kubectl cluster-info >/dev/null 2>&1; then
 fi
 
 # Verify GPU node exists
-if ! kubectl get nodes -l nvidia.com/gpu.present=true --no-headers 2>/dev/null | grep -q .; then
-    echo "Error: no GPU nodes found (label nvidia.com/gpu.present=true). Install GPU Operator first." >&2
+if ! kubectl get nodes -l feature.node.kubernetes.io/pci-10de.present=true --no-headers 2>/dev/null | grep -q .; then
+    echo "Error: no GPU nodes found (label feature.node.kubernetes.io/pci-10de.present=true). Install GPU Operator first." >&2
     exit 1
 fi
 

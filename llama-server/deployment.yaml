@@ -16,7 +16,7 @@ spec:
         app: llama-server
     spec:
       nodeSelector:
-        nvidia.com/gpu.present: "true"
+        feature.node.kubernetes.io/pci-10de.present: "true"
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

@@ -3,6 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NAMESPACE="monitoring"
+CHART_REPO="https://prometheus-community.github.io/helm-charts"
+CHART_NAME="prometheus-community/kube-prometheus-stack"
+KUBE_PROMETHEUS_STACK_VERSION="${KUBE_PROMETHEUS_STACK_VERSION:-86.2.2}"
 
 usage() {
     cat <<'EOF'
@@ -14,6 +17,7 @@ Exposes Grafana via Cilium Gateway API.
 Options:
   --grafana-password PASS  Grafana admin password (generate with: uuidgen)
   --host HOSTNAME          Gateway HTTPRoute hostname (default: grafana.k8s.junjie.pro)
+  --version VERSION        kube-prometheus-stack chart version (default: 86.2.2)
   --dry-run                Print helm diff without applying
   --help                   Show this help
 EOF
@@ -22,12 +26,14 @@ EOF
 
 GRAFANA_PASSWORD=""
 GATEWAY_HOST="grafana.k8s.junjie.pro"
+VERSION="${KUBE_PROMETHEUS_STACK_VERSION}"
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --grafana-password) GRAFANA_PASSWORD="$2"; shift 2 ;;
         --host)             GATEWAY_HOST="$2";          shift 2 ;;
+        --version)          VERSION="$2";               shift 2 ;;
         --dry-run)          DRY_RUN=true;               shift ;;
         --help)             usage 0 ;;
         *)                  echo "Unknown option: $1" >&2; usage 1 ;;
@@ -39,7 +45,12 @@ if ! kubectl cluster-info >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "Deploying monitoring stack..."
+if ! command -v helm >/dev/null 2>&1; then
+    echo "Error: helm not found. Install it first: https://helm.sh/docs/intro/install/" >&2
+    exit 1
+fi
+
+echo "Deploying monitoring stack (chart: ${VERSION})..."
 
 echo "-> Creating namespace..."
 kubectl apply -f "${SCRIPT_DIR}/namespace.yaml"
@@ -63,26 +74,31 @@ else
     fi
 fi
 
-echo "-> Adding prometheus-community Helm repo..."
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
-helm repo update prometheus-community
-
-echo "-> Installing kube-prometheus-stack..."
-if [[ "${DRY_RUN}" == "true" ]]; then
-    helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-        -n "${NAMESPACE}" \
-        -f "${SCRIPT_DIR}/values.yaml" \
-        "${HELM_ARGS[@]}" \
-        --dry-run
-else
-    helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-        -n "${NAMESPACE}" \
-        -f "${SCRIPT_DIR}/values.yaml" \
-        "${HELM_ARGS[@]}"
+if $DRY_RUN; then
+    echo "DRY-RUN: helm upgrade --install kube-prometheus-stack ${CHART_NAME} \\"
+    echo "  --namespace \"${NAMESPACE}\" \\"
+    echo "  --version \"${VERSION}\" \\"
+    echo "  -f \"${SCRIPT_DIR}/values.yaml\" \\"
+    echo "  --set grafana.adminPassword=<password> \\"
+    echo "  --wait \\"
+    echo "  --timeout 5m"
+    exit 0
 fi
 
-echo "-> Waiting for Grafana deployment to be ready..."
-kubectl rollout status deployment/kube-prometheus-stack-grafana -n "${NAMESPACE}" --timeout=300s
+echo "-> Adding prometheus-community Helm repo..."
+if ! helm repo list -o yaml 2>/dev/null | grep -q "${CHART_REPO}"; then
+    helm repo add prometheus-community "${CHART_REPO}"
+fi
+helm repo update prometheus-community
+
+echo "-> Installing kube-prometheus-stack (${VERSION})..."
+helm upgrade --install kube-prometheus-stack "${CHART_NAME}" \
+    --namespace "${NAMESPACE}" \
+    --version "${VERSION}" \
+    -f "${SCRIPT_DIR}/values.yaml" \
+    "${HELM_ARGS[@]}" \
+    --wait \
+    --timeout 5m
 
 GATEWAY_CLASS=$(kubectl get gatewayclass cilium -o name 2>/dev/null || true)
 
@@ -99,6 +115,7 @@ fi
 
 echo ""
 echo "Monitoring stack deployed."
+echo "  Chart:     ${CHART_NAME} ${VERSION}"
 echo "  Namespace: ${NAMESPACE}"
 echo "  Grafana:   http://${GATEWAY_HOST}"
 if kubectl get crd certificates.cert-manager.io >/dev/null 2>&1; then

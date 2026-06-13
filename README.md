@@ -34,6 +34,9 @@ bash monitoring/install.sh --grafana-password $(uuidgen)
 # Custom hostnames
 bash llama-server/install.sh --api-key $(uuidgen) --host llama.example.com
 bash monitoring/install.sh --grafana-password $(uuidgen) --host grafana.example.com
+
+# Pin chart version
+bash monitoring/install.sh --grafana-password $(uuidgen) --version 86.2.2
 ```
 
 ## Architecture

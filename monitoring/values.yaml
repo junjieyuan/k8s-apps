@@ -1,17 +1,21 @@
+# Placeholder — real password is injected via --grafana-password flag at deploy time.
 grafana:
   adminPassword: CHANGE_ME
-  ingress:
-    enabled: false
 
+# Disable Alertmanager — not needed for this cluster's monitoring scope.
 alertmanager:
   enabled: false
 
 prometheus:
   prometheusSpec:
+    # Discover ServiceMonitors/PodMonitors/Probes/ScrapeConfigs from all
+    # namespaces, not just those with the release label. This allows app-level
+    # ServiceMonitors (e.g. llama-server) to be picked up automatically.
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     scrapeConfigSelectorNilUsesHelmValues: false
+    # 7-day retention (default 10d) — sufficient for home cluster metrics.
     retention: 7d
     resources:
       requests:
@@ -21,5 +25,7 @@ prometheus:
         memory: 2Gi
         cpu: 1
 
+# Disable default alerting rules to avoid noise from rules designed for
+# larger production clusters (etcd, kubelet, kube-proxy alerts, etc.).
 defaultRules:
   create: false

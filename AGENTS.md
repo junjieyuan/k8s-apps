@@ -17,6 +17,12 @@ running in the cluster must have a corresponding manifest or values file in this
 repo. No manual `kubectl` edits on the cluster that aren't reflected back into
 code. When in doubt, re-run `install.sh` to verify idempotency.
 
+## Naming conventions
+
+- **Version variables** — use component-specific env var names (e.g.
+  `KUBE_PROMETHEUS_STACK_VERSION`, `LLAMA_SERVER_VERSION`), never bare `VERSION`.
+  This avoids collisions when scripts are sourced together.
+
 ## Directory structure
 
 Each application lives in its own directory with an `install.sh` entry point.
@@ -44,16 +50,21 @@ gateway/
 
 - **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never introduce
   Python, Node, or other languages for deployment scripts.
-- **`kubectl` is the primary tool** for resource management.
-- **Helm** is allowed for operators and complex charts where `values.yaml`
-  provides clear advantage over raw manifests (e.g. cert-manager, GPU operator).
-  Application workloads default to plain YAML + `kubectl`.
+- **`kubectl` is the primary tool** for resource management. Application
+  workloads (deployment, service, ingress/route, PVC) default to plain YAML
+  + `envsubst`.
+- **Helm** is used **only** when managing a complex stack that ships as a
+  single upstream chart with many interdependent sub-resources (CRDs,
+  dashboards, alert rules, service monitors, etc.). Example:
+  kube-prometheus-stack. For a simple deployment + service + route, Helm
+  adds unnecessary abstraction — use kubectl + envsubst.
 
 ## Code style
 
 - Follow the same conventions as the `k8s-cluster` repo.
 - YAML manifests use 2-space indentation.
 - `install.sh` is the entry point for each application.
+- **Runtime deps** — check with `command -v` early in the script, before any work begins. Never assume `helm`, `kubectl`, or other tools are present.
 
 ## Privilege handling
 
@@ -104,6 +115,56 @@ and database credentials.
   YAML files that contain `${VAR}` placeholders. The install script handles
   `envsubst` substitution via temporary files. Direct apply will pass literals
   like `${GATEWAY_HOST}` to the controller, causing silent misconfiguration.
+
+## Deployment checklist
+
+Before declaring any application "done", verify every item.
+This applies to new apps and upgrades alike.
+
+### Version consistency
+
+- [ ] `usage()` help text, script default variable, and container image tag
+  all reference the same version.
+- [ ] Version is overridable via both `--version` CLI flag and an environment
+  variable (e.g. `LLAMA_SERVER_VERSION="${LLAMA_SERVER_VERSION:-server-cuda-b9603}"`).
+- [ ] Image tag is substituted via `envsubst` into the deployment YAML, not
+  hardcoded independently of the version variable.
+
+### YAML manifests
+
+- [ ] Every YAML file containing `${VAR}` placeholders is processed through
+  `envsubst` + temp file (with `trap` cleanup) in `install.sh`, never
+  `kubectl apply -f` directly.
+- [ ] `kubectl create ... --dry-run=client -o yaml | kubectl apply -f -`
+  pattern used for Secrets and other generated resources for idempotency.
+
+### Idempotency
+
+- [ ] Re-running `install.sh` produces a no-op: all `kubectl apply` calls
+  report "unchanged" or "configured" with no resource recreation.
+
+### Post-deploy verification
+
+- [ ] `kubectl logs -n <ns> deployment/<name>` shows no E/F-level errors.
+- [ ] Pod status is `Running` with all containers `Ready`.
+- [ ] The script's final summary echoes the version that was actually deployed.
+- [ ] `kubectl get httproute -n <ns>` shows the route accepted and bound to
+  a Gateway (check the Route status conditions).
+
+### Cluster sync
+
+- [ ] Every resource running in the cluster has a corresponding manifest file
+  in this repo. No resource exists only on the cluster.
+- [ ] `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
+  matches the image tag in the version variable.
+
+### Script conventions
+
+- [ ] `SCRIPT_DIR` pattern used for locating sibling files.
+- [ ] Secrets use `.example` files with placeholders; real values passed via
+  CLI flags or gitignored files.
+- [ ] `envsubst` is called with only the specific variables that the template
+  needs (e.g. `envsubst '$GATEWAY_HOST'`), not all exported vars.
 
 ## Commit conventions
 

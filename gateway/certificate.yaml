@@ -1,12 +1,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: llama-server-tls
-  namespace: llama-server
+  name: gateway-tls
+  namespace: gateway
 spec:
-  secretName: llama-server-tls
+  secretName: gateway-tls
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-${GATEWAY_HOSTS}
+    - "${GATEWAY_WILDCARD}"

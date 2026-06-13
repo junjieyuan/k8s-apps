@@ -1,10 +1,13 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: llama-server
-  namespace: llama-server
+  name: gateway
+  namespace: gateway
 spec:
   gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: 192.168.122.200
   listeners:
     - name: http
       protocol: HTTP
@@ -18,7 +21,7 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: llama-server-tls
+          - name: gateway-tls
       allowedRoutes:
         namespaces:
           from: All

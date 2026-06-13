@@ -5,8 +5,8 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: llama-server
-      namespace: llama-server
+    - name: gateway
+      namespace: gateway
   hostnames:
     - "${GATEWAY_HOST}"
   rules:

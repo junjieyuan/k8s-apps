@@ -22,10 +22,10 @@ Managed via `kubectl` apply scripts and Helm charts.
 ## Usage
 
 ```bash
-# 1. Deploy the shared Gateway + TLS certificate first
+# 1. Deploy the shared Gateway + wildcard TLS certificate first
 bash gateway/install.sh
-# Or with custom hostnames:
-bash gateway/install.sh --hosts llama.k8s.junjie.pro,grafana.k8s.junjie.pro
+# Or with a custom wildcard:
+bash gateway/install.sh --wildcard '*.example.com'
 
 # 2. Deploy applications
 bash llama-server/install.sh --api-key $(uuidgen)
@@ -42,8 +42,8 @@ bash monitoring/install.sh --grafana-password $(uuidgen) --version 86.2.2
 ## Architecture
 
 ```
-External → LB IP (192.168.122.200) → Cilium Gateway (shared, All namespace routing)
+External → LB IP (192.168.122.200) → Cilium Gateway (shared, namespace: gateway, pinned IP)
   ├─ HTTP (port 80)  → HTTPRoute[host: llama.k8s.junjie.pro]   → llama-server
   │                  → HTTPRoute[host: grafana.k8s.junjie.pro]  → monitoring/grafana
-  └─ HTTPS (port 443, TLS via cert-manager, SANs: both hosts)   → same
+  └─ HTTPS (port 443, TLS via cert-manager, wildcard: *.k8s.junjie.pro) → same
 ```

@@ -20,7 +20,7 @@ code. When in doubt, re-run `install.sh` to verify idempotency.
 ## Naming conventions
 
 - **Version variables** — use component-specific env var names (e.g.
-  `KUBE_PROMETHEUS_STACK_VERSION`, `LLAMA_SERVER_VERSION`), never bare `VERSION`.
+  `KUBE_PROMETHEUS_STACK_VERSION`), never bare `VERSION`.
   This avoids collisions when scripts are sourced together.
 
 ## Directory structure
@@ -30,9 +30,10 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
 ```
 gateway/
-├── install.sh              # deploys shared Gateway + TLS Certificate
+├── install.sh              # deploys shared Gateway + wildcard TLS Certificate
+├── namespace.yaml           # Namespace (gateway)
 ├── gateway.yaml             # Gateway (Cilium Gateway API, allows routes from all ns)
-└── certificate.yaml         # Certificate (cert-manager, uses ${GATEWAY_HOSTS} template)
+└── certificate.yaml         # Certificate (wildcard, cert-manager, uses ${GATEWAY_WILDCARD})
 
 <app-name>/
 ├── install.sh              # entry point, deploys all resources
@@ -123,12 +124,10 @@ This applies to new apps and upgrades alike.
 
 ### Version consistency
 
-- [ ] `usage()` help text, script default variable, and container image tag
-  all reference the same version.
-- [ ] Version is overridable via both `--version` CLI flag and an environment
-  variable (e.g. `LLAMA_SERVER_VERSION="${LLAMA_SERVER_VERSION:-server-cuda-b9603}"`).
-- [ ] Image tag is substituted via `envsubst` into the deployment YAML, not
-  hardcoded independently of the version variable.
+- [ ] If using a pinned image tag, `usage()` help text, script default variable,
+  and container image tag all reference the same version, overrideable via
+  `--version` and an env var. If using a floating tag (e.g. `server-cuda`),
+  pair it with `imagePullPolicy: Always` and a regular restart cadence.
 
 ### YAML manifests
 
@@ -147,7 +146,8 @@ This applies to new apps and upgrades alike.
 
 - [ ] `kubectl logs -n <ns> deployment/<name>` shows no E/F-level errors.
 - [ ] Pod status is `Running` with all containers `Ready`.
-- [ ] The script's final summary echoes the version that was actually deployed.
+- [ ] The script's final summary echoes the version or image tag that was
+  actually deployed.
 - [ ] `kubectl get httproute -n <ns>` shows the route accepted and bound to
   a Gateway (check the Route status conditions).
 
@@ -156,7 +156,8 @@ This applies to new apps and upgrades alike.
 - [ ] Every resource running in the cluster has a corresponding manifest file
   in this repo. No resource exists only on the cluster.
 - [ ] `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
-  matches the image tag in the version variable.
+  matches the image tag in the deployment manifest (or version variable, if
+  templated).
 
 ### Script conventions
 

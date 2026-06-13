@@ -23,6 +23,11 @@ API_KEY=""
 GATEWAY_HOST="llama.k8s.junjie.pro"
 DRY_RUN=false
 
+if ! command -v kubectl >/dev/null 2>&1; then
+    echo "Error: kubectl not found. Install it first: https://kubernetes.io/docs/tasks/tools/" >&2
+    exit 1
+fi
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --api-key) API_KEY="$2";         shift 2 ;;
@@ -101,10 +106,10 @@ fi
 
 # HTTPRoute (via shared Gateway)
 echo "-> Checking Gateway..."
-if ! kubectl get gateway llama-server -n "${NAMESPACE}" >/dev/null 2>&1; then
-    echo "  Warning: Gateway 'llama-server' not found. Run ../gateway/install.sh first." >&2
+if ! kubectl get gateway gateway -n gateway >/dev/null 2>&1; then
+    echo "  Warning: Gateway 'gateway' not found in namespace 'gateway'. Run ../gateway/install.sh first." >&2
 else
-    echo "  Gateway: $(kubectl get gateway llama-server -n "${NAMESPACE}" -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo '<pending>')"
+    echo "  Gateway: $(kubectl get gateway gateway -n gateway -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo '<pending>')"
 
     echo "-> Creating HTTPRoute..."
     export GATEWAY_HOST

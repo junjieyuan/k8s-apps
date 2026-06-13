@@ -106,6 +106,25 @@ and database credentials.
   automatic Let's Encrypt provisioning and renewal.
 - **Secrets never committed** — use `.example` files with placeholders, pass real
   values via CLI flags or gitignored files.
+- **No redundant defaults** — omit YAML fields that match Kubernetes defaults
+  (e.g. `protocol: TCP`, `replicas: 1`, `terminationGracePeriodSeconds: 30`).
+  Only include explicit overrides so intentional deviations stand out.
+- **Cluster sync verification** — after any deploy, run a spot-check:
+  `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
+  to confirm the cluster matches the manifest (or version variable).
+
+### Gateway design
+
+- **Dedicated namespace** — the shared Gateway lives in its own `gateway/`
+  namespace, never inside an application namespace.
+- **IP pinning** — in bare-metal environments without BGP, pin the LB IP via
+  `spec.addresses` so it survives Gateway deletion and recreation.
+- **Wildcard TLS** — a single `*.domain` certificate covers all app hostnames
+  and requires no changes when adding new apps. Wildcard certificates need
+  a DNS-01 solver (configured in the `k8s-cluster` repo).
+- **Cross-namespace routes** — HTTPRoutes reference the Gateway via
+  `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from: All`
+  enables this without per-app ReferenceGrants.
 
 ## Debugging deployments
 

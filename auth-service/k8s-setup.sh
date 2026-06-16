@@ -17,7 +17,9 @@ and database.
 
 Options:
   --env ENV            Environment (required): dev, staging, prod
-  --db-pass PASSWORD   Database role password (required, generate with: uuidgen)
+  --db-pass PASSWORD   Database role password (optional; if secret already
+                       exists, its value is used and this flag is ignored;
+                       required when creating a new secret; generate with: uuidgen)
   --pg-pass PASSWORD   PostgreSQL superuser password (optional; auto-detects
                        from postgres-credentials secret in postgres namespace)
   --dry-run            Print resources without applying
@@ -51,11 +53,6 @@ case "$ENV" in
     *) echo "Error: --env must be dev, staging, or prod" >&2; exit 1 ;;
 esac
 
-if [[ -z "$DB_PASS" ]]; then
-    echo "Error: --db-pass is required (generate with: uuidgen)." >&2
-    exit 1
-fi
-
 NAMESPACE="auth-${ENV}"
 DB_NAME="auth_${ENV}"
 
@@ -84,6 +81,16 @@ NS_TMP="${TMPDIR}/namespace.yaml"
 envsubst '$NAMESPACE' < "${SCRIPT_DIR}/namespace.yaml" > "$NS_TMP"
 apply "$NS_TMP"
 
+if [[ -z "$DB_PASS" ]]; then
+    if DB_PASS=$(kubectl get secret auth-db-credentials -n "${NAMESPACE}" \
+        -o go-template='{{.data.SPRING_DATASOURCE_PASSWORD|base64decode}}' 2>/dev/null); then
+        echo "  Using password from existing auth-db-credentials secret"
+    else
+        echo "Error: --db-pass is required when secret does not already exist (generate with: uuidgen)." >&2
+        exit 1
+    fi
+fi
+
 echo "-> Creating Secret..."
 kubectl create secret generic auth-db-credentials \
     --from-literal="SPRING_DATASOURCE_PASSWORD=${DB_PASS}" \
@@ -106,7 +113,7 @@ if [[ -z "$PG_SUPERUSER_PASSWORD" ]]; then
     echo "  Using superuser password from postgres-credentials" >&2
 fi
 
-kubectl exec -n postgres postgres-0 -- \
+kubectl exec -n postgres postgres-0 -i -- \
     env PGPASSWORD="${PG_SUPERUSER_PASSWORD}" \
     bash -s -- "${DB_NAME}" "${DB_PASS}" <<'SCRIPT'
 set -euo pipefail
@@ -140,12 +147,8 @@ if psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" |
     echo "  Database ${DB_NAME} already exists"
 else
     psql -U postgres -v ON_ERROR_STOP=1 <<SQL
-DO \$\$
-BEGIN
-    EXECUTE format('CREATE DATABASE %I OWNER %I', '${DB_NAME}', '${DB_NAME}');
-    EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO %I', '${DB_NAME}', '${DB_NAME}');
-END
-\$\$;
+CREATE DATABASE "${DB_NAME}" OWNER "${DB_NAME}";
+GRANT ALL PRIVILEGES ON DATABASE "${DB_NAME}" TO "${DB_NAME}";
 SQL
     echo "  Database ${DB_NAME} created"
 fi

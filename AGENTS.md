@@ -1,192 +1,114 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## Project nature
 
 This repo manages Kubernetes application workloads running on an existing
 k8s cluster. It is NOT responsible for cluster provisioning — that lives
-in the **`k8s-cluster`** repo. See that repo for VM provisioning, kubeadm
-init/join, CNI/CSI/GPU operator, cert-manager, and external-dns installation.
+in the **`k8s-cluster`** repo (VM provisioning, kubeadm init/join, CNI/CSI,
+GPU operator, cert-manager, external-dns). Only user-facing services and
+their resources (deployments, services, gateways, HTTPRoutes, certificates)
+live here.
 
-**This repo is for application workloads only.** Cluster-level infrastructure
-(CNI, CSI, GPU operator, cert-manager, external-dns) belongs in `k8s-cluster`.
-Only user-facing services and their resources (deployments, services, gateways,
-HTTPRoutes, certificates) live here.
-
-**The repo must be in full sync with the cluster** — every application resource
-running in the cluster must have a corresponding manifest or values file in this
-repo. No manual `kubectl` edits on the cluster that aren't reflected back into
-code. When in doubt, re-run `install.sh` to verify idempotency.
-
-## Naming conventions
-
-- **Version variables** — use component-specific env var names (e.g.
-  `KUBE_PROMETHEUS_STACK_VERSION`), never bare `VERSION`.
-  This avoids collisions when scripts are sourced together.
+**The repo must be in full sync with the cluster** — every application
+resource running in the cluster must have a corresponding manifest or
+values file in this repo. No manual `kubectl` edits on the cluster that
+aren't reflected back into code. When in doubt, re-run `install.sh` to
+verify idempotency.
 
 ## Directory structure
 
-Each application lives in its own directory with an `install.sh` entry point.
+Each app lives in its own directory with an `install.sh` entry point.
 Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
+Look at existing apps for the canonical file layout — what files an app
+has depends on its stack (plain YAML, Helm, StatefulSet, etc.).
 
-```
-gateway/
-├── install.sh              # deploys shared Gateway + wildcard TLS Certificate
-├── namespace.yaml           # Namespace (gateway)
-├── gateway.yaml             # Gateway (Cilium Gateway API, allows routes from all ns)
-└── certificate.yaml         # Certificate (wildcard, cert-manager, uses ${GATEWAY_WILDCARD})
+## Conventions
 
-<app-name>/
-├── install.sh              # entry point, deploys all resources
-├── namespace.yaml           # Namespace
-├── deployment.yaml          # Deployment
-├── service.yaml             # Service (ClusterIP)
-├── httproute.yaml           # HTTPRoute (uses ${GATEWAY_HOST} template, refs shared Gateway)
-├── persistentvolume.yaml    # PersistentVolume (optional)
-├── persistentvolumeclaim.yaml  # PersistentVolumeClaim (optional)
-├── secret.yaml.example      # Secret template (never commit real values)
-└── models.ini               # Config file (optional)
-```
+### Shell & tools
 
-## Tool constraints
-
-- **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never introduce
-  Python, Node, or other languages for deployment scripts.
+- **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never
+  introduce Python, Node, or other languages.
+- **Check runtime deps** with `command -v` early in the script, before any
+  work begins. Never assume `helm`, `kubectl`, or other tools are present.
 - **`kubectl` is the primary tool** for resource management. Application
-  workloads (deployment, service, ingress/route, PVC) default to plain YAML
-  + `envsubst`.
+  workloads (deployment, service, route, PVC) default to plain YAML +
+  `envsubst`. Never `kubectl apply -f` directly on YAML files containing
+  `${VAR}` placeholders — always pipe through `envsubst` into a temp file
+  (with `trap` cleanup). Call `envsubst` with only the specific variables
+  the template needs (e.g. `envsubst '$GATEWAY_HOST'`), not all exported
+  vars.
 - **Helm** is used **only** when managing a complex stack that ships as a
   single upstream chart with many interdependent sub-resources (CRDs,
   dashboards, alert rules, service monitors, etc.). Example:
   kube-prometheus-stack. For a simple deployment + service + route, Helm
   adds unnecessary abstraction — use kubectl + envsubst.
+- **Secret idempotency** — use `kubectl create ... --dry-run=client -o
+  yaml | kubectl apply -f -` for Secrets and other generated resources.
+- **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
+  for locating sibling files.
 
-## Code style
+### Secrets
 
-- Follow the same conventions as the `k8s-cluster` repo.
-- YAML manifests use 2-space indentation.
-- `install.sh` is the entry point for each application.
-- **Runtime deps** — check with `command -v` early in the script, before any work begins. Never assume `helm`, `kubectl`, or other tools are present.
-
-## Privilege handling
-
-All scripts run as the current user. `kubectl` uses the current kubeconfig.
-No root escalation needed (cluster access is role-based).
-
-## Secrets
-
-**Separate secrets from code.** Real values live in gitignored files
-(`secret.yaml`, credentials, etc.). Committed files use `.example` variants
-with placeholder values only. This keeps secrets out of git history and
-allows each environment to supply its own values.
-
+- **Separate secrets from code.** Real values live in gitignored files
+  (`secret.yaml`, credentials, etc.). Committed files use `.example`
+  variants with placeholder values only. Never commit keys, passwords,
+  tokens, certificates, credentials, or kubeconfig files.
 - `models.ini` may contain public HuggingFace repo references — that is fine.
+- Pass real values via CLI flags at deploy time, never hardcoded in scripts.
 
-**Absolute prohibition:** never commit any secret, key, password, token,
-certificate, or credential to this repository. This includes but is not
-limited to API keys, SSH private keys, TLS certificates, kubeconfig files,
-and database credentials.
+### Versioning
 
-## Component versions
-
-- **Always target latest stable** — pin explicit versions (e.g. `v1.20.2`, not
-  `latest`), but keep them current. Check upstream releases before deployment.
-- **Container images** — prefer explicit build tags (e.g. `server-cuda-b9603`), but
-  floating tags (e.g. `server-cuda`) are acceptable when paired with
-  `imagePullPolicy: Always` and regular restart cycles.
+- **Component-specific env var names** (e.g. `KUBE_PROMETHEUS_STACK_VERSION`,
+  `POSTGRES_VERSION`), never bare `VERSION`. This avoids collisions when
+  scripts are sourced together.
+- **Pin explicit versions** (e.g. `v1.20.2`, not `latest`), but keep them
+  current. Check upstream releases before deployment.
+- **Container images** — prefer explicit build tags (e.g.
+  `server-cuda-b9603`), but floating tags (e.g. `server-cuda`) are
+  acceptable when paired with `imagePullPolicy: Always` and regular
+  restart cycles.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 
-## Best practices
+### YAML style
 
-- **Application workloads via kubectl** — plain YAML manifests, `envsubst` for
-  templating, no Helm or Kustomize.
-- **Gateway API over Ingress** — use `Gateway` + `HTTPRoute` from
-  `gateway.networking.k8s.io/v1`, not `networking.k8s.io/v1` Ingress.
-- **TLS via cert-manager** — `ClusterIssuer` + `Certificate` resources for
-  automatic Let's Encrypt provisioning and renewal.
-- **Secrets never committed** — use `.example` files with placeholders, pass real
-  values via CLI flags or gitignored files.
+- 2-space indentation.
 - **No redundant defaults** — omit YAML fields that match Kubernetes defaults
-  (e.g. `protocol: TCP`, `replicas: 1`, `terminationGracePeriodSeconds: 30`).
-  Only include explicit overrides so intentional deviations stand out.
-- **Cluster sync verification** — after any deploy, run a spot-check:
-  `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
-  to confirm the cluster matches the manifest (or version variable).
+  (e.g. `protocol: TCP`, `replicas: 1`, `terminationGracePeriodSeconds:
+  30`). Only include explicit overrides so intentional deviations stand out.
 
 ### Gateway design
 
-- **Dedicated namespace** — the shared Gateway lives in its own `gateway/`
-  namespace, never inside an application namespace.
+- **Dedicated namespace** — the shared Gateway lives in `gateway/`, never
+  inside an application namespace.
+- **Gateway API over Ingress** — use `Gateway` + `HTTPRoute` from
+  `gateway.networking.k8s.io/v1`.
+- **TLS via cert-manager** — `ClusterIssuer` + `Certificate` for automatic
+  Let's Encrypt provisioning and renewal.
+- **Wildcard TLS** — a single `*.domain` certificate covers all app hostnames
+  and requires no changes when adding new apps. Needs a DNS-01 solver
+  (configured in `k8s-cluster`).
 - **IP pinning** — in bare-metal environments without BGP, pin the LB IP via
   `spec.addresses` so it survives Gateway deletion and recreation.
-- **Wildcard TLS** — a single `*.domain` certificate covers all app hostnames
-  and requires no changes when adding new apps. Wildcard certificates need
-  a DNS-01 solver (configured in the `k8s-cluster` repo).
 - **Cross-namespace routes** — HTTPRoutes reference the Gateway via
-  `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from: All`
-  enables this without per-app ReferenceGrants.
+  `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from:
+  All` enables this without per-app ReferenceGrants.
 
-## Debugging deployments
+## Debugging
 
 - **After deploying any new component, immediately check logs** for E/F-level
   errors: `kubectl logs -n <namespace> deployment/<name>`. CrashLoop/BackOff
   must be investigated before moving on.
-- **Always use `install.sh` to deploy** — never `kubectl apply -f` directly on
-  YAML files that contain `${VAR}` placeholders. The install script handles
-  `envsubst` substitution via temporary files. Direct apply will pass literals
-  like `${GATEWAY_HOST}` to the controller, causing silent misconfiguration.
+- **Cluster sync spot-check** — after any deploy, confirm the cluster
+  matches the manifest:
+  `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
 
 ## Deployment checklist
 
-Before declaring any application "done", verify every item.
-This applies to new apps and upgrades alike.
-
-### Version consistency
-
-- [ ] If using a pinned image tag, `usage()` help text, script default variable,
-  and container image tag all reference the same version, overrideable via
-  `--version` and an env var. If using a floating tag (e.g. `server-cuda`),
-  pair it with `imagePullPolicy: Always` and a regular restart cadence.
-
-### YAML manifests
-
-- [ ] Every YAML file containing `${VAR}` placeholders is processed through
-  `envsubst` + temp file (with `trap` cleanup) in `install.sh`, never
-  `kubectl apply -f` directly.
-- [ ] `kubectl create ... --dry-run=client -o yaml | kubectl apply -f -`
-  pattern used for Secrets and other generated resources for idempotency.
-
-### Idempotency
-
-- [ ] Re-running `install.sh` produces a no-op: all `kubectl apply` calls
-  report "unchanged" or "configured" with no resource recreation.
-
-### Post-deploy verification
-
-- [ ] `kubectl logs -n <ns> deployment/<name>` shows no E/F-level errors.
-- [ ] Pod status is `Running` with all containers `Ready`.
-- [ ] The script's final summary echoes the version or image tag that was
-  actually deployed.
-- [ ] `kubectl get httproute -n <ns>` shows the route accepted and bound to
-  a Gateway (check the Route status conditions).
-
-### Cluster sync
-
-- [ ] Every resource running in the cluster has a corresponding manifest file
-  in this repo. No resource exists only on the cluster.
-- [ ] `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
-  matches the image tag in the deployment manifest (or version variable, if
-  templated).
-
-### Script conventions
-
-- [ ] `SCRIPT_DIR` pattern used for locating sibling files.
-- [ ] Secrets use `.example` files with placeholders; real values passed via
-  CLI flags or gitignored files.
-- [ ] `envsubst` is called with only the specific variables that the template
-  needs (e.g. `envsubst '$GATEWAY_HOST'`), not all exported vars.
+See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for the full
+pre-deployment verification checklist.
 
 ## Commit conventions
 
-- Atomic commits with conventional prefixes: `feat:`, `fix:`, `refactor:`, `docs:`
+- Atomic commits following [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 - Each commit changes one logical concern.

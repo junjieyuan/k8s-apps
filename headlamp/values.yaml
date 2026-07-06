@@ -1,0 +1,12 @@
+# Headlamp configuration overrides.
+# Only non-default values are listed; see the upstream chart for all options:
+# https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp
+
+# Prevent the dashboard from starving other workloads on this shared cluster.
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

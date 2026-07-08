@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudflared
-  namespace: ${NAMESPACE}
   labels:
     app: cloudflared
 spec:
@@ -26,7 +25,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: cloudflared
-          image: docker.io/cloudflare/cloudflared:${CLOUDFLARED_VERSION}
+          image: docker.io/cloudflare/cloudflared
           args:
             - tunnel
             - --metrics

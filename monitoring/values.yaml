@@ -1,6 +1,11 @@
 # Placeholder — real password is injected via --grafana-password flag at deploy time.
 grafana:
   adminPassword: CHANGE_ME
+  # Persist dashboards, datasources, and user preferences across pod restarts.
+  # Without this, manually created dashboards are lost on Helm upgrade or pod eviction.
+  persistence:
+    enabled: true
+    size: 2Gi
 
 # Disable Alertmanager — not needed for this cluster's monitoring scope.
 alertmanager:

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NAMESPACE="monitoring"
 CHART_REPO="https://prometheus-community.github.io/helm-charts"
 CHART_NAME="prometheus-community/kube-prometheus-stack"
-KUBE_PROMETHEUS_STACK_VERSION="${KUBE_PROMETHEUS_STACK_VERSION:-86.2.2}"
+KUBE_PROMETHEUS_STACK_VERSION="${KUBE_PROMETHEUS_STACK_VERSION:-87.10.1}"
 
 usage() {
     cat <<'EOF'
@@ -17,7 +17,7 @@ Exposes Grafana via Cilium Gateway API.
 Options:
   --grafana-password PASS  Grafana admin password (generate with: uuidgen)
   --host HOSTNAME          Gateway HTTPRoute hostname (default: grafana.k8s.junjie.pro)
-  --version VERSION        kube-prometheus-stack chart version (default: 86.2.2)
+  --version VERSION        kube-prometheus-stack chart version (default: 87.10.1)
   --dry-run                Print helm diff without applying
   --help                   Show this help
 EOF

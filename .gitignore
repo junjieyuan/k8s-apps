@@ -1,12 +1,20 @@
+# Secrets / credentials
 .env
-*.ign
+values-secret.yaml
 secret.yaml
 kubeconfig*
+
+# TLS / cert material
 *.key
 *.crt
 *.pem
 *.p12
 *.pfx
+
+# Kustomize helmCharts cache
+charts/
+
+# Editor / OS
 *.swp
 *.swo
 *~

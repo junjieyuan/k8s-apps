@@ -21,8 +21,9 @@ Each app lives in its own directory. The canonical layout varies by stack:
 - **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
   auth-service) use a `kustomization.yaml` at the root or in `overlays/`
   for multi-environment apps, and deploy via `kubectl apply -k <app>/`.
-- **Helm apps** (monitoring, headlamp) keep an `install.sh` wrapper around
-  `helm upgrade --install` with a pinned chart version.
+- **Helm + Kustomize apps** (headlamp, monitoring) use the
+  `kustomization.yaml` built-in `helmCharts` generator. See Conventions
+  for the `--enable-helm` flag requirement.
 
 Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
@@ -41,11 +42,20 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
     files contain no `${VAR}` placeholders. Secrets use `secretGenerator`
     with `.env` files (real values gitignored, `.env.example` committed as
     template). Multi-environment apps use `base/` + `overlays/<env>/`.
-- **Helm** is used **only** when managing a complex stack that ships as a
-  single upstream chart with many interdependent sub-resources (CRDs,
-  dashboards, alert rules, service monitors, etc.). Example:
-  kube-prometheus-stack. For a simple deployment + service + route, Helm
-  adds unnecessary abstraction — use Kustomize.
+  - **`helmCharts` generator** — when a Kustomization uses the built-in
+    `helmCharts` field, it requires `--enable-helm`. **`kubectl apply -k`
+    does NOT support `--enable-helm`**, so you must pipe:
+    `kubectl kustomize --enable-helm <dir>/ | kubectl apply -f -`.
+    `kustomize build --enable-helm <dir>/ | kubectl apply -f -` also works
+    if standalone kustomize is installed. Version pinning goes in the
+    `helmCharts[].version` field; overrides in `valuesFile`.
+- **Helm** is used **only** via the Kustomize `helmCharts` generator
+  — never `helm install` directly. This applies to complex charts
+  (kube-prometheus-stack) and simple ones alike. The single exception is
+  a Helm chart that ships interdependent CRDs/sub-resources which
+  `helm template` handles but plain YAML cannot express concisely. For
+  a simple deployment + service + route, use plain Kustomize without
+  `helmCharts`.
 - **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
   for locating sibling files.
 
@@ -55,18 +65,22 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   (`.env`, `secret.yaml`, credentials, etc.). Committed files use `.example`
   variants with placeholder values only. Never commit keys, passwords,
   tokens, certificates, credentials, or kubeconfig files.
-- **Kustomize `secretGenerator`** is the preferred approach. It reads from
-  `.env` and generates a hashed Secret at build time, automatically
-  patching all `secretRef.name` references in downstream resources.
+- **Kustomize `secretGenerator`** is the preferred approach for plain YAML
+  apps. It reads from `.env` and generates a hashed Secret at build time,
+  automatically patching all `secretRef.name` references in downstream
+  resources.
+- **`values-secret.yaml`** for `helmCharts` apps — sensitive Helm values
+  (passwords, tokens) go in a gitignored `values-secret.yaml` loaded via
+  `additionalValuesFiles`. Commit `values-secret.yaml.example` with
+  placeholder values as a template.
 - `models.ini` may contain public HuggingFace repo references — that is fine.
 
 ### Versioning
 
 - **Pin explicit versions** (e.g. `2026.6.1`, `server-cuda12-b9894`, not
   `latest`), but keep them current. Check upstream releases before deployment.
-  For Kustomize apps, pin the version in `kustomization.yaml` via
-  `images.newTag:`. For Helm apps, use a component-prefixed env var
-  (e.g. `HEADLAMP_VERSION`, `KUBE_PROMETHEUS_STACK_VERSION`).
+  - Plain Kustomize apps: pin via `images.newTag:` in `kustomization.yaml`.
+  - `helmCharts` apps: pin via `helmCharts[].version` in `kustomization.yaml`.
 - **Container images** — prefer explicit build tags (e.g.
   `server-cuda12-b9894`), but floating tags (e.g. `latest`) are
   acceptable for dev-iteration apps (auth-service) paired with

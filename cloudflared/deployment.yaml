@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: ${NAMESPACE}
+  labels:
+    app: cloudflared
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: cloudflared
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: cloudflared
+          image: docker.io/cloudflare/cloudflared:${CLOUDFLARED_VERSION}
+          args:
+            - tunnel
+            - --metrics
+            - 0.0.0.0:2000
+            - run
+          envFrom:
+            - secretRef:
+                name: cf-tunnel-token
+          ports:
+            - containerPort: 2000
+              name: metrics
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: metrics

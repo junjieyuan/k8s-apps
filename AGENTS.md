@@ -29,6 +29,16 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
 ## Conventions
 
+### Documentation
+
+- **Keep docs in sync with code.** When changing deployment commands,
+  secret management, directory structure, or conventions, update these
+  files in the same commit or a follow-up:
+  - `AGENTS.md` — if conventions change
+  - `README.md` — if deploy commands, app list, or architecture change
+  - `DEPLOYMENT_CHECKLIST.md` — if verification steps change
+  - `.gitignore` — if new ignored file patterns are introduced
+
 ### Shell & tools
 
 - **Bash only** — `#!/usr/bin/env bash` + `set -euo pipefail`. Never

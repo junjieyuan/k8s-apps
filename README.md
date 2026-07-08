@@ -6,8 +6,10 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 
 ```
 gateway/            Shared Gateway + wildcard TLS (deploy first)
+cloudflared/        Cloudflare Tunnel client
 postgres/           PostgreSQL with persistent storage
 monitoring/         Prometheus + Grafana (Helm)
+headlamp/           Kubernetes dashboard (Helm)
 llama-server/       llama.cpp inference server
 auth-service/       Authentication service (multi-environment)
 ```
@@ -17,10 +19,12 @@ auth-service/       Authentication service (multi-environment)
 | App | Description | Stack |
 |-----|-------------|-------|
 | **gateway** | Shared Cilium Gateway + wildcard TLS certificate | Cilium Gateway API, cert-manager |
-| **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Cilium Gateway API |
-| **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Helm, Cilium Gateway API |
-| **postgres** | PostgreSQL with persistent storage | StatefulSet |
-| **auth-service** | Authentication service (multi-environment: dev/staging/prod) | Deployment, Cilium Gateway API |
+| **cloudflared** | Cloudflare Tunnel client for external access | Deployment, Kustomize |
+| **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Kustomize |
+| **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Helm |
+| **headlamp** | Kubernetes dashboard | Helm |
+| **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
+| **auth-service** | Authentication service (multi-environment: dev/staging/prod) | Deployment, Kustomize |
 
 ## Prerequisites
 
@@ -34,31 +38,41 @@ auth-service/       Authentication service (multi-environment)
 
 ```bash
 # 1. Shared Gateway (deploy first)
-bash gateway/install.sh
-bash gateway/install.sh --wildcard '*.example.com'   # custom wildcard
+kubectl apply -k gateway/
 
 # 2. Infrastructure
-bash postgres/install.sh --password $(uuidgen)
+kubectl apply -k postgres/
 bash monitoring/install.sh --grafana-password $(uuidgen)
 
 # 3. Applications
-bash llama-server/install.sh --api-key $(uuidgen)
-bash auth-service/k8s-setup.sh --env dev --db-pass $(uuidgen)
-bash auth-service/install.sh --env dev
+kubectl apply -k cloudflared/
+kubectl apply -k llama-server/
+bash headlamp/install.sh
 
-# Override defaults
-bash monitoring/install.sh --grafana-password $(uuidgen) --host grafana.example.com --version 86.2.2
-bash llama-server/install.sh --api-key $(uuidgen) --host llama.example.com
+# 4. Auth (multi-environment)
+kubectl apply -k auth-service/overlays/dev/
+bash auth-service/db-setup.sh --env dev
+
+# Override Helm chart versions
+HEADLAMP_VERSION=0.44.0 bash headlamp/install.sh
+KUBE_PROMETHEUS_STACK_VERSION=87.11.0 bash monitoring/install.sh --grafana-password $(uuidgen)
 ```
 
 ## Architecture
 
 ```
+# Gateway path (k8s.junjie.pro)
 External → LB IP (192.168.122.200) → Cilium Gateway (shared, namespace: gateway, pinned IP)
   ├─ HTTP (port 80)  → HTTPRoute[host: llama.k8s.junjie.pro]    → llama-server
   │                  → HTTPRoute[host: grafana.k8s.junjie.pro]   → monitoring (Grafana)
+  │                  → HTTPRoute[host: headlamp.k8s.junjie.pro]  → headlamp
   │                  → HTTPRoute[host: auth.k8s.junjie.pro]      → auth-service
   └─ HTTPS (port 443, TLS via cert-manager, wildcard: *.k8s.junjie.pro) → same
+
+# Cloudflare Tunnel path (junjie.pro)
+External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
+  ├─ grafana.junjie.pro    → kube-prometheus-stack-grafana.monitoring:80
+  └─ (more to add)
 
   postgres (ClusterIP, no external route) → accessed internally by auth-service
 ```

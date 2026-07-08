@@ -12,15 +12,19 @@ live here.
 **The repo must be in full sync with the cluster** — every application
 resource running in the cluster must have a corresponding manifest or
 values file in this repo. No manual `kubectl` edits on the cluster that
-aren't reflected back into code. When in doubt, re-run `install.sh` to
-verify idempotency.
+aren't reflected back into code. When in doubt, re-run `kubectl apply -k <app>`
+to verify idempotency.
 
 ## Directory structure
 
-Each app lives in its own directory with an `install.sh` entry point.
+Each app lives in its own directory. The canonical layout varies by stack:
+- **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
+  auth-service) use a `kustomization.yaml` at the root or in `overlays/`
+  for multi-environment apps, and deploy via `kubectl apply -k <app>/`.
+- **Helm apps** (monitoring, headlamp) keep an `install.sh` wrapper around
+  `helm upgrade --install` with a pinned chart version.
+
 Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
-Look at existing apps for the canonical file layout — what files an app
-has depends on its stack (plain YAML, Helm, StatefulSet, etc.).
 
 ## Conventions
 
@@ -30,43 +34,43 @@ has depends on its stack (plain YAML, Helm, StatefulSet, etc.).
   introduce Python, Node, or other languages.
 - **Check runtime deps** with `command -v` early in the script, before any
   work begins. Never assume `helm`, `kubectl`, or other tools are present.
-- **`kubectl` is the primary tool** for resource management. Application
-  workloads (deployment, service, route, PVC) default to plain YAML +
-  `envsubst`. Never `kubectl apply -f` directly on YAML files containing
-  `${VAR}` placeholders — always pipe through `envsubst` into a temp file
-  (with `trap` cleanup). Call `envsubst` with only the specific variables
-  the template needs (e.g. `envsubst '$GATEWAY_HOST'`), not all exported
-  vars.
+- **`kubectl` is the primary tool** for resource management.
+  - **Kustomize** (`kubectl apply -k`) is the default for all plain YAML
+    apps. Variable injection (namespace, image tag) lives in
+    `kustomization.yaml` via `namespace:` and `images.newTag:`. Plain YAML
+    files contain no `${VAR}` placeholders. Secrets use `secretGenerator`
+    with `.env` files (real values gitignored, `.env.example` committed as
+    template). Multi-environment apps use `base/` + `overlays/<env>/`.
 - **Helm** is used **only** when managing a complex stack that ships as a
   single upstream chart with many interdependent sub-resources (CRDs,
   dashboards, alert rules, service monitors, etc.). Example:
   kube-prometheus-stack. For a simple deployment + service + route, Helm
-  adds unnecessary abstraction — use kubectl + envsubst.
-- **Secret idempotency** — use `kubectl create ... --dry-run=client -o
-  yaml | kubectl apply -f -` for Secrets and other generated resources.
+  adds unnecessary abstraction — use Kustomize.
 - **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
   for locating sibling files.
 
 ### Secrets
 
 - **Separate secrets from code.** Real values live in gitignored files
-  (`secret.yaml`, credentials, etc.). Committed files use `.example`
+  (`.env`, `secret.yaml`, credentials, etc.). Committed files use `.example`
   variants with placeholder values only. Never commit keys, passwords,
   tokens, certificates, credentials, or kubeconfig files.
+- **Kustomize `secretGenerator`** is the preferred approach. It reads from
+  `.env` and generates a hashed Secret at build time, automatically
+  patching all `secretRef.name` references in downstream resources.
 - `models.ini` may contain public HuggingFace repo references — that is fine.
-- Pass real values via CLI flags at deploy time, never hardcoded in scripts.
 
 ### Versioning
 
-- **Component-specific env var names** (e.g. `KUBE_PROMETHEUS_STACK_VERSION`,
-  `POSTGRES_VERSION`), never bare `VERSION`. This avoids collisions when
-  scripts are sourced together.
-- **Pin explicit versions** (e.g. `v1.20.2`, not `latest`), but keep them
-  current. Check upstream releases before deployment.
+- **Pin explicit versions** (e.g. `2026.6.1`, `server-cuda12-b9894`, not
+  `latest`), but keep them current. Check upstream releases before deployment.
+  For Kustomize apps, pin the version in `kustomization.yaml` via
+  `images.newTag:`. For Helm apps, use a component-prefixed env var
+  (e.g. `HEADLAMP_VERSION`, `KUBE_PROMETHEUS_STACK_VERSION`).
 - **Container images** — prefer explicit build tags (e.g.
-  `server-cuda-b9603`), but floating tags (e.g. `server-cuda`) are
-  acceptable when paired with `imagePullPolicy: Always` and regular
-  restart cycles.
+  `server-cuda12-b9894`), but floating tags (e.g. `latest`) are
+  acceptable for dev-iteration apps (auth-service) paired with
+  `imagePullPolicy: Always`.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 

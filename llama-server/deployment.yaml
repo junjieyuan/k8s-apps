@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: llama-server
-  namespace: llama-server
 spec:
   replicas: 1
   strategy:

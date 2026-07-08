@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llama-server
+configurations:
+  - servicemonitor-secretref.yaml
+resources:
+  - namespace.yaml
+  - persistentvolume.yaml
+  - persistentvolumeclaim.yaml
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+  - httproute.yaml
+configMapGenerator:
+  - name: models-config
+    files:
+      - models.ini
+secretGenerator:
+  - name: llama-server-key
+    envs:
+      - .env

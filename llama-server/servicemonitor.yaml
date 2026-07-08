@@ -2,7 +2,6 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: llama-server
-  namespace: llama-server
 spec:
   selector:
     matchLabels:

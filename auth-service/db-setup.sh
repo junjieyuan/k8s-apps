@@ -12,17 +12,19 @@ usage() {
     cat <<'EOF'
 Usage: k8s-setup.sh [OPTIONS]
 
-Set up auth-service: namespace, DB credentials secret, PostgreSQL role
-and database.
+Set up auth-service PostgreSQL role and database. Run this AFTER the
+Kustomize overlay has been applied (kubectl apply -k overlays/<env>/).
+
+The overlay already handles namespace and Secret creation via Kustomize.
+This script only creates the PostgreSQL role and database.
 
 Options:
   --env ENV            Environment (required): dev, staging, prod
-  --db-pass PASSWORD   Database role password (optional; if secret already
-                       exists, its value is used and this flag is ignored;
-                       required when creating a new secret; generate with: uuidgen)
+  --db-pass PASSWORD   Database role password (optional; auto-detected from
+                       auth-db-credentials Secret if already created)
   --pg-pass PASSWORD   PostgreSQL superuser password (optional; auto-detects
                        from postgres-credentials secret in postgres namespace)
-  --dry-run            Print resources without applying
+  --dry-run            Print SQL without executing
   --help               Show this help
 EOF
     exit "${1:-0}"
@@ -61,48 +63,24 @@ if ! kubectl cluster-info >/dev/null 2>&1; then
     exit 1
 fi
 
-apply() {
-    if [[ "$DRY_RUN" == true ]]; then
-        kubectl apply -f "$1" --dry-run=client -o yaml
-    else
-        kubectl apply -f "$1"
-    fi
-}
-
-TMPDIR="$(mktemp -d)"
-cleanup() { rm -rf "$TMPDIR"; }
-trap cleanup EXIT
-
-echo "Setting up auth-service (env=${ENV}, namespace=${NAMESPACE})..."
-
-echo "-> Creating namespace..."
-export NAMESPACE
-NS_TMP="${TMPDIR}/namespace.yaml"
-envsubst '$NAMESPACE' < "${SCRIPT_DIR}/namespace.yaml" > "$NS_TMP"
-apply "$NS_TMP"
-
+# Resolve DB password
 if [[ -z "$DB_PASS" ]]; then
     if DB_PASS=$(kubectl get secret auth-db-credentials -n "${NAMESPACE}" \
         -o go-template='{{.data.SPRING_DATASOURCE_PASSWORD|base64decode}}' 2>/dev/null); then
-        echo "  Using password from existing auth-db-credentials secret"
+        echo "Using password from auth-db-credentials Secret in ${NAMESPACE}"
     else
-        echo "Error: --db-pass is required when secret does not already exist (generate with: uuidgen)." >&2
+        echo "Error: --db-pass is required when Secret does not exist." >&2
+        echo "  Ensure kubectl apply -k overlays/${ENV}/ has been run first." >&2
         exit 1
     fi
 fi
 
-echo "-> Creating Secret..."
-kubectl create secret generic auth-db-credentials \
-    --from-literal="SPRING_DATASOURCE_PASSWORD=${DB_PASS}" \
-    -n "${NAMESPACE}" --dry-run=client -o yaml | apply -
-
 if [[ "$DRY_RUN" == true ]]; then
-    echo ""
-    echo "Dry-run: skipping PostgreSQL role and database creation."
+    echo "DRY-RUN: would create role '${DB_NAME}' and database '${DB_NAME}' in postgres"
     exit 0
 fi
 
-echo "-> Creating PostgreSQL role and database ${DB_NAME}..."
+echo "Creating PostgreSQL role and database (env=${ENV}, db=${DB_NAME})..."
 
 if [[ -z "$PG_SUPERUSER_PASSWORD" ]]; then
     if ! PG_SUPERUSER_PASSWORD=$(kubectl get secret postgres-credentials -n postgres \
@@ -110,7 +88,6 @@ if [[ -z "$PG_SUPERUSER_PASSWORD" ]]; then
         echo "Error: --pg-pass not provided and postgres-credentials secret not found in postgres namespace." >&2
         exit 1
     fi
-    echo "  Using superuser password from postgres-credentials" >&2
 fi
 
 kubectl exec -n postgres postgres-0 -i -- \

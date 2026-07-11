@@ -6,7 +6,7 @@ resources:
   - deployment.yaml
 images:
   - name: docker.io/cloudflare/cloudflared
-    newTag: "2026.6.1"
+    newTag: "2026.7.1"
 secretGenerator:
   - name: cf-tunnel-token
     envs:

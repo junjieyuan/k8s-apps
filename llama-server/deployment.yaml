@@ -37,21 +37,21 @@ spec:
               cpu: 2
           env:
             - name: LLAMA_ARG_CACHE_TYPE_K
-              value: q8_0
+              value: "q8_0"
             - name: LLAMA_ARG_CACHE_TYPE_V
-              value: q8_0
+              value: "q8_0"
             - name: LLAMA_ARG_LOG_VERBOSITY
               value: "4"
             - name: LLAMA_ARG_MODELS_MAX
               value: "1"
             - name: LLAMA_ARG_MODELS_PRESET
-              value: /etc/llama-server/models.ini
+              value: "/etc/llama-server/models.ini"
             - name: LLAMA_ARG_ENDPOINT_METRICS
-              value: "1"
+              value: "true"
             - name: LLAMA_ARG_UI
-              value: "0"
-            - name: LLAMA_OFFLINE
-              value: "1"
+              value: "false"
+            - name: LLAMA_ARG_OFFLINE
+              value: "true"
           envFrom:
             - secretRef:
                 name: llama-server-key

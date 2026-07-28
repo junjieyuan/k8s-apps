@@ -63,7 +63,7 @@ bash auth-service/db-setup.sh --env dev
 
 ```
 # Gateway path (k8s.junjie.pro)
-External → LB IP (192.168.122.200) → Cilium Gateway (shared, namespace: gateway, pinned IP)
+External → LB IP (192.168.200.200) → Cilium Gateway (shared, namespace: gateway, pinned IP)
   ├─ HTTP (port 80)  → HTTPRoute[host: llama.k8s.junjie.pro]    → llama-server
   │                  → HTTPRoute[host: grafana.k8s.junjie.pro]   → monitoring (Grafana)
   │                  → HTTPRoute[host: headlamp.k8s.junjie.pro]  → headlamp

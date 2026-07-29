@@ -2,6 +2,7 @@
 .env
 values-secret.yaml
 secret.yaml
+credentials.json
 kubeconfig*
 
 # TLS / cert material

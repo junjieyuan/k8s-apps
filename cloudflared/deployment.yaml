@@ -28,12 +28,11 @@ spec:
           image: docker.io/cloudflare/cloudflared
           args:
             - tunnel
+            - --config
+            - /etc/cloudflared/config/config.yaml
             - --metrics
             - 0.0.0.0:2000
             - run
-          envFrom:
-            - secretRef:
-                name: cf-tunnel-token
           ports:
             - containerPort: 2000
               name: metrics
@@ -47,3 +46,17 @@ spec:
             httpGet:
               path: /ready
               port: metrics
+          volumeMounts:
+            - name: config
+              mountPath: /etc/cloudflared/config
+              readOnly: true
+            - name: creds
+              mountPath: /etc/cloudflared/creds
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: cloudflared-config
+        - name: creds
+          secret:
+            secretName: cloudflared-credentials

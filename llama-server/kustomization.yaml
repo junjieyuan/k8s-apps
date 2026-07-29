@@ -11,6 +11,7 @@ resources:
   - service.yaml
   - servicemonitor.yaml
   - openai-api-private-httproute.yaml
+  - openai-api-private-dnsendpoint.yaml
 configMapGenerator:
   - name: models-config
     files:

@@ -1,0 +1,10 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: headlamp
+spec:
+  endpoints:
+    - dnsName: headlamp.junjie.pro
+      recordType: CNAME
+      targets:
+        - e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com

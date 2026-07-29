@@ -10,7 +10,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - servicemonitor.yaml
-  - httproute.yaml
+  - openai-api-private-httproute.yaml
 configMapGenerator:
   - name: models-config
     files:

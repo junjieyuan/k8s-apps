@@ -7,7 +7,7 @@ spec:
     - name: gateway
       namespace: gateway
   hostnames:
-    - auth.k8s.junjie.pro
+    - auth.junjie.pro
   rules:
     - matches:
         - path:

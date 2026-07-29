@@ -7,7 +7,7 @@ spec:
     - name: gateway
       namespace: gateway
   hostnames:
-    - grafana.k8s.junjie.pro
+    - grafana.junjie.pro
   rules:
     - backendRefs:
         - name: kube-prometheus-stack-grafana

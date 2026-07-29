@@ -7,7 +7,7 @@ spec:
     - name: gateway
       namespace: gateway
   hostnames:
-    - llama.k8s.junjie.pro
+    - openai-api-private.junjie.pro
   rules:
     - matches:
         - path:

@@ -62,18 +62,16 @@ bash auth-service/db-setup.sh --env dev
 ## Architecture
 
 ```
-# Gateway path (k8s.junjie.pro)
-External → LB IP (192.168.200.200) → Cilium Gateway (shared, namespace: gateway, pinned IP)
-  ├─ HTTP (port 80)  → HTTPRoute[host: llama.k8s.junjie.pro]    → llama-server
-  │                  → HTTPRoute[host: grafana.k8s.junjie.pro]   → monitoring (Grafana)
-  │                  → HTTPRoute[host: headlamp.k8s.junjie.pro]  → headlamp
-  │                  → HTTPRoute[host: auth.k8s.junjie.pro]      → auth-service
-  └─ HTTPS (port 443, TLS via cert-manager, wildcard: *.k8s.junjie.pro) → same
-
-# Cloudflare Tunnel path (junjie.pro)
+# Unified ingress (junjie.pro)
 External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
-  ├─ grafana.junjie.pro    → kube-prometheus-stack-grafana.monitoring:80
-  └─ (more to add)
+  └─ TLS (port 443, wildcard: *.junjie.pro) → cloudflared pod
+      └─ https://cilium-gateway-gateway.gateway:443 (originServerName = SNI)
+          └─ Cilium Gateway (shared, namespace: gateway, pinned IP: 192.168.200.200)
+              └─ HTTPRoute[host: *.junjie.pro]
+                  ├─ llama.junjie.pro              → llama-server:8080
+                  ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
+                  ├─ headlamp.junjie.pro           → headlamp:80
+                  └─ auth.junjie.pro               → auth-service:8080
 
   postgres (ClusterIP, no external route) → accessed internally by auth-service
 ```

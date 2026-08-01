@@ -10,8 +10,8 @@ resources:
   - deployment.yaml
   - service.yaml
   - servicemonitor.yaml
-  - openai-api-private-httproute.yaml
-  - openai-api-private-dnsendpoint.yaml
+  - httproute.yaml
+  - dnsendpoint.yaml
 configMapGenerator:
   - name: models-config
     files:

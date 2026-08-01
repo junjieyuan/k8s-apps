@@ -1,10 +1,10 @@
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
-  name: openai-api-private
+  name: llama
 spec:
   endpoints:
-    - dnsName: openai-api-private.junjie.pro
+    - dnsName: llama.junjie.pro
       recordType: CNAME
       targets:
         - e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com

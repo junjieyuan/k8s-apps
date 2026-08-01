@@ -32,7 +32,7 @@ cloudflared pod (3 replicas)
            │ HTTPRoute[host: *.junjie.pro]
     ┌──────┴──────────────────────────────────────────────┐
     │  Backend Services                                   │
-    │    • openai-api-private.junjie.pro → llama-server:8080            │
+    │    • llama.junjie.pro              → llama-server:8080             │
     │    • grafana.junjie.pro → kube-prometheus-stack-grafana:80 │
     │    • headlamp.junjie.pro → headlamp:80               │
     │    • auth.junjie.pro → auth-service:8080             │
@@ -48,7 +48,7 @@ cloudflared pod (3 replicas)
 
 ## Cookie 域名
 
-所有服务共享 `*.junjie.pro`。HTTPRoute 的 hostname 为 `openai-api-private.junjie.pro`、`grafana.junjie.pro` 等。后端服务将 cookie scope 设置为 `.junjie.pro`，避免跨服务 cookie 问题。
+所有服务共享 `*.junjie.pro`。HTTPRoute 的 hostname 为 `llama.junjie.pro`、`grafana.junjie.pro` 等。后端服务将 cookie scope 设置为 `.junjie.pro`，避免跨服务 cookie 问题。
 
 **为什么需要 `originServerName`**：cloudflared 连接 Gateway 时指定 `originServerName: <service>.junjie.pro`，Gateway 根据 TLS SNI 匹配正确的 HTTPRoute。后端服务收到的 Host 头是 `<service>.junjie.pro`，与浏览器地址栏一致，cookie 写入和读取不再出现域名不匹配的问题。
 
@@ -138,11 +138,11 @@ Tunnel ID：`e6e456ae-2397-4f56-a601-e6498091e030`
 tunnel: e6e456ae-2397-4f56-a601-e6498091e030
 credentials-file: /etc/cloudflared/creds/credentials.json
 ingress:
-  - hostname: openai-api-private.junjie.pro
+  - hostname: llama.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:
       noTLSVerify: true
-    originServerName: openai-api-private.junjie.pro
+    originServerName: llama.junjie.pro
   - hostname: headlamp.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:
@@ -270,7 +270,7 @@ kubectl logs -n cloudflared deployment/cloudflared
 
 # 从外部访问各服务
 curl -I https://grafana.junjie.pro
-curl -I https://openai-api-private.junjie.pro
+curl -I https://llama.junjie.pro
 curl -I https://headlamp.junjie.pro
 curl -I https://auth.junjie.pro
 ```
@@ -298,7 +298,7 @@ k8s-apps/
     config.yaml              隧道入口规则
     credentials.json.example credentials 模板
   llama-server/
-    httproute.yaml           hostname: openai-api-private.junjie.pro
+    httproute.yaml           hostname: llama.junjie.pro
     dnsendpoint.yaml         CNAME → tunnel
   headlamp/
     httproute.yaml           hostname: headlamp.junjie.pro

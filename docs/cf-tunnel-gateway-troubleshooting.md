@@ -9,7 +9,7 @@
 **解决方案**：更新以下文件中的 Tunnel ID：
 
 - `cloudflared/config.yaml`
-- `llama-server/openai-api-private-dnsendpoint.yaml`
+- `llama-server/dnsendpoint.yaml`
 - `monitoring/dnsendpoint.yaml`
 - `headlamp/dnsendpoint.yaml`
 - `auth-service/base/dnsendpoint.yaml`
@@ -127,6 +127,6 @@ ingress:
 | Grafana | `grafana.junjie.pro` | ✅ | 302 → /login |
 | Headlamp | `headlamp.junjie.pro` | ✅ | 200 |
 | Auth | `auth.junjie.pro` | ✅ | 404 (API) |
-| Llama | `openai-api-private.junjie.pro` | ✅ | 200 |
+| Llama | `llama.junjie.pro` | ✅ | 200 |
 
 所有服务公网可访问，cookie 域名统一为 `*.junjie.pro`。

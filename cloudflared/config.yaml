@@ -1,11 +1,11 @@
 tunnel: e6e456ae-2397-4f56-a601-e6498091e030
 credentials-file: /etc/cloudflared/creds/credentials.json
 ingress:
-  - hostname: openai-api-private.junjie.pro
+  - hostname: llama.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:
       noTLSVerify: true
-    originServerName: openai-api-private.junjie.pro
+    originServerName: llama.junjie.pro
   - hostname: headlamp.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:

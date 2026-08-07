@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 ## Project nature
 
@@ -19,11 +19,12 @@ to verify idempotency.
 
 Each app lives in its own directory. The canonical layout varies by stack:
 - **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
-  auth-service) use a `kustomization.yaml` at the root or in `overlays/`
-  for multi-environment apps, and deploy via `kubectl apply -k <app>/`.
-- **Helm + Kustomize apps** (headlamp, monitoring) use the
-  `kustomization.yaml` built-in `helmCharts` generator. See Conventions
-  for the `--enable-helm` flag requirement.
+  auth-service) — described in detail under Shell & tools.
+  Multi-environment apps use `base/` + `overlays/<env>/` (auth-service).
+  Direct deploy: `kubectl apply -k <app>/`.
+- **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
+  under Shell & tools. Deploy: `kubectl kustomize --enable-helm <app>/ |
+  kubectl apply -f -`.
 
 Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
@@ -36,7 +37,7 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   files in the same commit or a follow-up:
   - `AGENTS.md` — if conventions change
   - `README.md` — if deploy commands, app list, or architecture change
-  - `DEPLOYMENT_CHECKLIST.md` — if verification steps change
+  - **Update this doc** if verification steps change
   - `.gitignore` — if new ignored file patterns are introduced
 
 ### Shell & tools
@@ -122,19 +123,16 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from:
   All` enables this without per-app ReferenceGrants.
 
-## Debugging
-
-- **After deploying any new component, immediately check logs** for E/F-level
-  errors: `kubectl logs -n <namespace> deployment/<name>`. CrashLoop/BackOff
-  must be investigated before moving on.
-- **Cluster sync spot-check** — after any deploy, confirm the cluster
-  matches the manifest:
-  `kubectl get deploy <name> -n <ns> -o jsonpath='{.spec.template.spec.containers[0].image}'`
-
 ## Deployment checklist
 
-See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for the full
-pre-deployment verification checklist.
+Before declaring any application "done", verify every item.
+This applies to new apps and upgrades alike.
+
+- **Version consistency** — image tag pinned via `images.newTag:` in `kustomization.yaml`/chart version via `helmCharts[].version`.
+- **Manifests** — no `${VAR}` placeholders in non-kustomize YAML. Secrets use `secretGenerator` (plain) or `values-secret.yaml` (helmCharts).
+- **Idempotency** — re-running deploy command produces no-op.
+- **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready. `kubectl get httproute -n <ns>` shows accepted with gateway ref bound.
+- **Cluster sync** — every running resource has a manifest. Image in cluster matches manifest image.
 
 ## Commit conventions
 

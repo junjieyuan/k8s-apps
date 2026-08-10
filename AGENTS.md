@@ -147,6 +147,16 @@ be changed with one-off commands:
 - **No redundant defaults** — omit YAML fields that match Kubernetes defaults
   (e.g. `protocol: TCP`, `replicas: 1`, `terminationGracePeriodSeconds:
   30`). Only include explicit overrides so intentional deviations stand out.
+- **Comments explain why, not what** — the manifest itself is the what; a
+  comment should capture the decision or constraint that isn't visible in the
+  YAML (e.g. why `clusterIP`, why a pinned size).
+- **helmCharts values: omit chart defaults too** — the same "no redundant
+  defaults" rule applies to values files: drop keys that match the pinned
+  chart version's defaults and keep only intentional overrides.
+- **Validate chart value keys** — misspelled or wrongly nested values are
+  silently ignored by Helm. Check keys against the pinned chart version
+  (`helm show values <chart> --version <v>`) and confirm the effect with
+  `kubectl diff` after applying.
 
 ### Gateway design
 

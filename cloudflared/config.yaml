@@ -29,4 +29,9 @@ ingress:
     originRequest:
       noTLSVerify: true
     originServerName: grafana.junjie.pro
+  - hostname: harbor.junjie.pro
+    service: https://cilium-gateway-gateway.gateway:443
+    originRequest:
+      noTLSVerify: true
+    originServerName: harbor.junjie.pro
   - service: http_status:404

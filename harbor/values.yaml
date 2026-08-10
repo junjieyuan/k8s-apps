@@ -1,0 +1,99 @@
+# Harbor configuration overrides (harbor-helm v1.19.2, Harbor OSS v2.15.2).
+# Only non-default values are listed; see the upstream chart for all options:
+# https://github.com/goharbor/harbor-helm
+
+# TLS terminates at the shared Gateway (gateway/), so Harbor serves plain HTTP
+# internally and creates no Ingress. httproute.yaml routes harbor.junjie.pro to
+# the chart's nginx frontend Service "harbor". The bundled Redis (single
+# replica, ClusterIP-only) is kept because nothing else in the cluster shares
+# it.
+expose:
+  type: clusterIP
+  tls:
+    enabled: false
+
+# Harbor bakes this URL into artifact links and API responses, so it must
+# match the public endpoint where the shared Gateway terminates TLS.
+externalURL: https://harbor.junjie.pro
+
+# Reuse the shared PostgreSQL (postgres/) instead of the bundled database.
+# Roles/databases are provisioned by db-setup.sh; credentials live in the
+# gitignored values-secret.yaml. The connection pool is bounded so Harbor
+# cannot exhaust the shared instance (chart defaults: 100 idle / 900 open).
+database:
+  type: external
+  external:
+    host: postgres.postgres.svc.cluster.local
+    username: harbor
+    coreDatabase: harbor
+  maxIdleConns: 50
+  maxOpenConns: 100
+
+# Shared 2-CPU worker nodes — bound each component so Harbor stays small.
+nginx:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+portal:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+core:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+jobservice:
+  maxJobWorkers: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+registry:
+  registry:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+  controller:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+# Trivy scanning is disabled to keep the footprint small (chart default is
+# enabled); turn it on later via trivy.enabled: true. notary and chartmuseum no
+# longer exist in harbor-helm 1.19.x.
+trivy:
+  enabled: false
+
+# Registry blobs live on the default NFS storage class; 100Gi leaves headroom
+# for image growth without over-provisioning the shared storage.
+persistence:
+  persistentVolumeClaim:
+    registry:
+      size: 100Gi

@@ -75,13 +75,13 @@ spec:
             - name: data
               mountPath: /root/ComfyUI/custom_nodes
               subPath: custom_nodes
-            # models/ is a read-only emptyDir by design: ComfyUI must have zero
-            # persistent model storage. Any download/write attempt fails loudly
-            # (EROFS) instead of silently writing to ephemeral disk; models load
-            # exclusively via extra_model_paths.yaml from the shared cache.
-            - name: models-ro
+            # models/ is an emptyDir (not persistent) but must be writable: the
+            # boot image copies the standard model subdirectories into it on
+            # every fresh start and aborts if the copy fails. Real models load
+            # exclusively via extra_model_paths.yaml from the shared cache, so
+            # anything written here dies with the pod.
+            - name: models
               mountPath: /root/ComfyUI/models
-              readOnly: true
             - name: data
               mountPath: /torch-hub
               subPath: torch-hub
@@ -120,7 +120,7 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: comfyui-data
-        - name: models-ro
+        - name: models
           emptyDir: {}
         - name: config
           configMap:

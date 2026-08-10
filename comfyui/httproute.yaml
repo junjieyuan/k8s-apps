@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: comfyui
+spec:
+  # comfyui.junjie.pro matches the wildcard *.junjie.pro certificate; the route
+  # points cross-namespace at the shared gateway (gateway/), which allows routes
+  # from all namespaces.
+  parentRefs:
+    - name: gateway
+      namespace: gateway
+  hostnames:
+    - comfyui.junjie.pro
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: comfyui
+          port: 8188

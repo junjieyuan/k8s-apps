@@ -11,6 +11,7 @@ postgres/           PostgreSQL with persistent storage
 monitoring/         Prometheus + Grafana (Kustomize + Helm chart)
 headlamp/           Kubernetes dashboard (Kustomize + Helm chart)
 llama-server/       llama.cpp inference server
+comfyui/            ComfyUI image generation (GPU)
 auth-service/       Authentication service (multi-environment)
 ```
 
@@ -21,6 +22,7 @@ auth-service/       Authentication service (multi-environment)
 | **gateway** | Shared Cilium Gateway + wildcard TLS certificate | Cilium Gateway API, cert-manager |
 | **cloudflared** | Cloudflare Tunnel client for external access | Deployment, Kustomize |
 | **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Kustomize |
+| **comfyui** | ComfyUI image generation (stable diffusion / flux workflows) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
@@ -33,7 +35,7 @@ auth-service/       Authentication service (multi-environment)
 - cert-manager (from `k8s-cluster`) — required for TLS; optional for HTTP-only
 - `kubectl` configured
 - `helm` — required for `helmCharts`-based apps (monitoring, headlamp)
-- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server)
+- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server, comfyui)
 
 ## Usage
 
@@ -52,6 +54,9 @@ kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 # 3. Applications
 kubectl apply -k cloudflared/
 kubectl apply -k llama-server/
+# comfyui: models are read-only from the shared host HF cache by design; there
+# is no persistent model storage (see comfyui/extra_model_paths.yaml).
+kubectl apply -k comfyui/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 
 # 4. Auth (multi-environment)
@@ -69,6 +74,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
           └─ Cilium Gateway (shared, namespace: gateway, pinned IP: 192.168.200.200)
               └─ HTTPRoute[host: *.junjie.pro]
                   ├─ llama.junjie.pro              → llama-server:8080
+                  ├─ comfyui.junjie.pro            → comfyui:8188
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   └─ auth.junjie.pro               → auth-service:8080

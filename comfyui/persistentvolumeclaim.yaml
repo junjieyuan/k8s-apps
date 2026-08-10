@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: comfyui-hf-cache
+spec:
+  # Mirrors the static PV (capacity, accessModes, storageClassName) so the two
+  # bind; same sizing as llama-server for consistency.
+  storageClassName: local-models
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: comfyui-data
+spec:
+  # Writable app data on the cluster default NFS class (nfs-csi, expandable).
+  # ReadWriteOnce suffices: single replica, no concurrent writers. Only
+  # non-model data lives here — models stay in the shared HF cache
+  # (extra_model_paths.yaml), which is why 50Gi is enough.
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi

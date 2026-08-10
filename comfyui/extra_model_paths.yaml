@@ -1,0 +1,29 @@
+# Why this file exists: ComfyUI's native loaders only know models/<type>/ paths,
+# but the HF hub cache is organized per repo (models--org--repo/snapshots/...).
+# Mapping the snapshots here makes cache models appear in the native dropdowns
+# without copying files or creating symlinks.
+#
+# Comfy-Org publishes ComfyUI-native split files whose subdirs are exactly the
+# ComfyUI categories, so each repo maps 1:1 onto diffusion_models/text_encoders/
+# vae/loras. All paths are inside the pod; /hf-cache is the GPU node's read-only
+# virtiofs HF hub cache shared with llama-server (no model data hits NFS).
+#
+# Snapshot hashes are pinned per repo (read from <repo>/refs/main on the host).
+# A repo update on the host changes the hash, so this file must be updated to
+# follow — deterministic config instead of runtime scanning.
+#
+# models/ is deliberately read-only and ephemeral in the deployment: zero model
+# storage by design, so this config is the only model source.
+
+z_image:
+  base_path: /hf-cache/models--Comfy-Org--z_image/snapshots/793c2712165203d1ddf07e550a66fc3562c2fbb8/split_files
+  diffusion_models: diffusion_models
+  text_encoders: text_encoders
+  vae: vae
+
+z_image_turbo:
+  base_path: /hf-cache/models--Comfy-Org--z_image_turbo/snapshots/2f862278568d3f0a83167a16e5f11094da6dee72/split_files
+  diffusion_models: diffusion_models
+  text_encoders: text_encoders
+  vae: vae
+  loras: loras

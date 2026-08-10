@@ -1,6 +1,14 @@
 tunnel: e6e456ae-2397-4f56-a601-e6498091e030
 credentials-file: /etc/cloudflared/creds/credentials.json
 ingress:
+  # Every public hostname needs an explicit tunnel ingress entry;
+  # originServerName must match the HTTPRoute hostname so the gateway
+  # terminates TLS correctly.
+  - hostname: comfyui.junjie.pro
+    service: https://cilium-gateway-gateway.gateway:443
+    originRequest:
+      noTLSVerify: true
+    originServerName: comfyui.junjie.pro
   - hostname: llama.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:

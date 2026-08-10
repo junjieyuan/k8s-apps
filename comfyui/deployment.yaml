@@ -23,8 +23,13 @@ spec:
     spec:
       # GPU-only: the image is a CUDA 13 build, and the shared HF cache (see
       # persistentvolume.yaml) only exists on the NVIDIA node, so scheduling must
-      # match the volume's node affinity. No fsGroup/securityContext needed: the
-      # image runs as root and the NFS export uses no_root_squash.
+      # match the volume's node affinity. seLinuxOptions.type: spc_t makes CRI-O
+      # skip SELinux relabeling of the read-only virtiofs cache (same fix as
+      # llama-server); relabeling would fail with EROFS. No fsGroup: the image
+      # runs as root and the NFS export uses no_root_squash.
+      securityContext:
+        seLinuxOptions:
+          type: spc_t
       nodeSelector:
         feature.node.kubernetes.io/pci-10de.present: "true"
       containers:

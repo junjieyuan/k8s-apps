@@ -70,6 +70,48 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 - **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
   for locating sibling files.
 
+### Drift prevention
+
+The repo is the source of truth for every resource. Runtime state must never
+be changed with one-off commands:
+
+- **Never use `kubectl scale`, `kubectl edit`, `kubectl patch`, or `kubectl
+  delete` to mutate manifest-managed resources** (deployments, services,
+  PVCs/PVs, routes, namespaces, ...). These change the cluster without a
+  manifest, and the next `kubectl apply -k` silently reverts them — the repo
+  and cluster drift apart.
+- **Pods are exempt: they are controller-managed and never live in the repo.**
+  Deleting a pod is remediation, not drift — the Deployment/ReplicaSet
+  recreates it. Safe targets: stale `Unknown` pods after a node reboot (they
+  still count toward replicas and block the replacement until removed),
+  stuck `Terminating`, CrashLoopBackOff. Verify node/workload state first,
+  and only delete pods owned by a controller with a manifest — mind pods with
+  node-local/RWO volumes whose replacement may not start elsewhere.
+- **Read-only inspection is always allowed** — `get`, `describe`, `logs`,
+  `events`, `top`, `port-forward`. `exec` is for inspection only: never modify
+  files under mounted volumes (that would be unreflected state).
+- **Rollout operations are exempt** — `kubectl rollout restart|status|undo`
+  do not change the declared spec (restart only stamps an annotation) and are
+  the approved way to force a reload after config/secret changes.
+- **Node maintenance is not drift** — `cordon`/`uncordon`/`drain` change
+  scheduling, not manifests. Coordinate with k8s-cluster: node lifecycle
+  lives in that repo.
+- **Replica counts live in the manifests.** To scale an app, edit `replicas:`
+  in its `deployment.yaml`, commit, then `kubectl apply -k <app>/`. Re-running
+  the apply is the idempotency check.
+- **GPU apps are mutually exclusive** — llama-server and comfyui share one
+  RTX 4080 (16GB) and cannot run inference at the same time. Switching the GPU
+  owner means editing `replicas:` in BOTH deployments (1 for the owner, 0 for
+  the other) and applying each app. Never `kubectl scale` to switch.
+- **Decommissioning** — to remove an app, run `kubectl delete -k <app>/`
+  first (while the manifests are still in the repo), then delete the
+  manifests and commit. Plain `kubectl apply -k` never deletes resources that
+  disappear from manifests. Never `kubectl delete` PVCs/PVs ad-hoc — that is
+  data loss, not drift.
+- **No ad-hoc test resources** — throwaway namespaces/pods/objects outside the
+  repo violate the sync invariant; if temporary resources are unavoidable,
+  clean them up before finishing.
+
 ### Secrets
 
 - **Separate secrets from code.** Real values live in gitignored files
@@ -132,7 +174,7 @@ This applies to new apps and upgrades alike.
 - **Manifests** — no `${VAR}` placeholders in non-kustomize YAML. Secrets use `secretGenerator` (plain) or `values-secret.yaml` (helmCharts).
 - **Idempotency** — re-running deploy command produces no-op.
 - **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready. `kubectl get httproute -n <ns>` shows accepted with gateway ref bound.
-- **Cluster sync** — every running resource has a manifest. Image in cluster matches manifest image.
+- **Cluster sync** — every running resource has a manifest. Image and `replicas:` in cluster match the manifest.
 
 ## Commit conventions
 

@@ -16,6 +16,22 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              # CF Access logs in on junjie-pro.cloudflareaccess.com, so the
+              # browser's first navigation after login is cross-site and sends
+              # Sec-Fetch-Site: cross-site. ComfyUI's origin-only middleware
+              # answers 403 to that header (it guards loopback/DNS-rebinding
+              # attacks, which don't apply behind the gateway). Strip it here
+              # rather than enabling ComfyUI's --enable-cors-header, which would
+              # swap out that middleware AND turn on permissive CORS headers;
+              # the frontend is same-origin, so keep the app's default posture
+              # and relax only this one header at the edge. Cross-site requests
+              # still can't authenticate: CF Access gates the hostname and the
+              # CF_Authorization cookie is SameSite=Lax.
+              - Sec-Fetch-Site
       backendRefs:
         - name: comfyui
           port: 8188

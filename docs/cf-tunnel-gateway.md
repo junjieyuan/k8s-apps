@@ -197,6 +197,11 @@ ingress:
 
 迁移策略：**先建后拆**。Gateway/证书先部署好，验证通过后再切 cloudflared 和 DNS。
 
+> **历史记录**：以下步骤记录了 2026-07 从 Token 认证迁移到 credentials 认证的实际操作，仅作存档。
+> 当前所有集群资源变更必须以 manifest 为准（见 AGENTS.md 漂移规则）：副本数改在
+> `deployment.yaml` 里再 apply，移除应用先 `kubectl delete -k <app>/` 再删 manifest；禁止用
+> `kubectl scale/edit/patch/delete` 直接操作 manifest 管理的资源。
+
 ### 步骤 1：更新证书
 
 ```bash
@@ -257,7 +262,9 @@ external-dns 会自动在 Cloudflare 创建 CNAME 记录。等待 DNS 生效（�
 **前提：** 将 Tunnel 的 `credentials.json` 放到 `cloudflared/` 目录下。该文件由 `cloudflared tunnel login` + `cloudflared tunnel create` 生成，如果 Tunnel 已存在但文件丢失，可通过 Cloudflare Dashboard → Zero Trust → Networks → Tunnels 重新下载。
 
 ```bash
-# 删除旧的 cloudflared（Token 方式）
+# 当时的遗留清理：旧 Token 部署（deployment + cf-tunnel-token secret）迁移前不在仓库
+# manifest 里，直接删除是一次性历史操作；今天的资源都由 manifest 管理，移除应先
+# kubectl delete -k <app>/ 再删 manifest，不要直接 kubectl delete deploy/secret。
 kubectl delete deploy cloudflared -n cloudflared
 kubectl delete secret cf-tunnel-token -n cloudflared
 

@@ -73,7 +73,10 @@ Tunnel 是可替换的前端模块。Gateway + HTTPRoute 层始终是路由的�
 **切换步骤**：
 
 1. 在宿主机上添加 `192.168.200.0/24` 的路由
-2. 停止 cloudflared：`kubectl scale deploy cloudflared -n cloudflared --replicas=0`
+2. 停止 cloudflared：编辑 `cloudflared/deployment.yaml` 将 `replicas:` 改为 `0`，提交后
+   `kubectl apply -k cloudflared/`（副本数只能改在 manifest 里，禁止 `kubectl scale`）。
+   若要彻底移除，先 `kubectl delete -k cloudflared/`（manifest 仍在仓库时），再删除
+   `cloudflared/` 下的 manifest 并提交
 3. external-dns source 从 `crd` 改为 `gateway-httproute`（HTTPRoute hostname 自动生成 A 记录指向 Gateway status 中的 IP）
 4. 删除 `DNSEndpoint` CR（或保留不启用）
 

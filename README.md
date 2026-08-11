@@ -36,7 +36,7 @@ auth-service/       Authentication service (multi-environment)
 - Gateway API CRDs + Cilium CNI (from `k8s-cluster`)
 - cert-manager (from `k8s-cluster`) — required for TLS; optional for HTTP-only
 - `kubectl` configured
-- `helm` — required for `helmCharts`-based apps (monitoring, headlamp)
+- `helm` — required for apps using the Kustomize `helmCharts` generator (see the Applications table for which)
 - GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server, comfyui)
 
 ## Usage

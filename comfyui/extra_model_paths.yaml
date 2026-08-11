@@ -5,8 +5,10 @@
 #
 # Comfy-Org publishes ComfyUI-native split files whose subdirs are exactly the
 # ComfyUI categories, so each repo maps 1:1 onto diffusion_models/text_encoders/
-# vae/loras. All paths are inside the pod; /hf-cache is the GPU node's read-only
-# virtiofs HF hub cache shared with llama-server (no model data hits NFS).
+# vae/loras. Most repos keep those under a split_files/ subdir; MiniMax-H3
+# keeps them at the snapshot root, so its base_path is the snapshot itself.
+# All paths are inside the pod; /hf-cache is the GPU node's read-only virtiofs
+# HF hub cache shared with llama-server (no model data hits NFS).
 #
 # Snapshot hashes are pinned per repo (read from <repo>/refs/main on the host).
 # A repo update on the host changes the hash, so this file must be updated to
@@ -27,3 +29,9 @@ z_image_turbo:
   text_encoders: text_encoders
   vae: vae
   loras: loras
+
+minimax_h3:
+  base_path: /hf-cache/models--Comfy-Org--MiniMax-H3/snapshots/014cd40f7e177756c6b2473c0d93b1c89a790dd2
+  diffusion_models: diffusion_models
+  text_encoders: text_encoders
+  vae: vae

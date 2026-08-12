@@ -1,18 +1,24 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-namespace: comfyui
-# Plain Kustomize, no helmCharts: this is a simple deployment + service + route
-# (AGENTS.md). configMapGenerator keeps extra_model_paths.yaml in git; its
-# content hash in the ConfigMap name forces the deployment to pick up changes.
-resources:
-  - namespace.yaml
-  - persistentvolume.yaml
-  - persistentvolumeclaim.yaml
-  - deployment.yaml
-  - service.yaml
-  - httproute.yaml
-  - dnsendpoint.yaml
-configMapGenerator:
-  - name: comfyui-config
-    files:
-      - extra_model_paths.yaml
+---
+{
+  apiVersion: "kustomize.config.k8s.io/v1beta1",
+  kind: "Kustomization",
+  namespace: "comfyui",
+  # Plain Kustomize, no helmCharts: this is a simple deployment + service + route
+  # (AGENTS.md). configMapGenerator keeps extra_model_paths.yaml in git; its
+  # content hash in the ConfigMap name forces the deployment to pick up changes.
+  resources: [
+    "namespace.yaml",
+    "persistentvolume.yaml",
+    "persistentvolumeclaim.yaml",
+    "deployment.yaml",
+    "service.yaml",
+    "httproute.yaml",
+    "dnsendpoint.yaml",
+  ],
+  configMapGenerator: [{
+    name: "comfyui-config",
+    files: [
+      "extra_model_paths.yaml",
+    ],
+  }],
+}

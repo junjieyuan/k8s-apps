@@ -28,8 +28,12 @@
 **解决方案**：在 external-dns Helm chart 的 values.yaml 中添加：
 
 ```yaml
-extraArgs:
-  cloudflare-proxied: true
+---
+{
+  extraArgs: {
+    cloudflare-proxied: true,
+  },
+}
 ```
 
 Helm chart 值 `extraArgs` 中的 `cloudflare-proxied: true`（布尔值）会生成 `--cloudflare-proxied`（无值参数）。错误写法 `cloudflareProxied: true` 不符合 chart 的 values schema，不会生效。
@@ -73,12 +77,17 @@ x509: certificate is valid for *.junjie.pro, not cilium-gateway-gateway.gateway
 **解决方案**：在 cloudflared config.yaml 的每个 ingress 规则中添加 `noTLSVerify: true`：
 
 ```yaml
-ingress:
-  - hostname: grafana.junjie.pro
-    service: https://cilium-gateway-gateway.gateway:443
-    originRequest:
-      noTLSVerify: true
-    originServerName: grafana.junjie.pro
+---
+{
+  ingress: [{
+    hostname: "grafana.junjie.pro",
+    service: "https://cilium-gateway-gateway.gateway:443",
+    originRequest: {
+      noTLSVerify: true,
+    },
+    originServerName: "grafana.junjie.pro",
+  }],
+}
 ```
 
 `noTLSVerify` 只在 cloudflared → Gateway 这条内网链路上跳过证书验证，公网 CF Edge → 用户浏览器的 TLS 不受影响。`originServerName` 仍然指定正确的 SNI，Gateway 据此匹配 HTTPRoute。

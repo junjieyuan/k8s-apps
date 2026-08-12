@@ -1,12 +1,21 @@
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: comfyui
-spec:
-  endpoints:
-    # CNAME to the Cloudflare tunnel so external-dns keeps DNS aligned with the
-    # tunnel ingress entry added in cloudflared/config.yaml.
-    - dnsName: comfyui.junjie.pro
-      recordType: CNAME
-      targets:
-        - e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com
+---
+{
+  apiVersion: "externaldns.k8s.io/v1alpha1",
+  kind: "DNSEndpoint",
+  metadata: {
+    name: "comfyui",
+  },
+  spec: {
+    endpoints: [
+      # CNAME to the Cloudflare tunnel so external-dns keeps DNS aligned with the
+      # tunnel ingress entry added in cloudflared/config.yaml.
+      {
+        dnsName: "comfyui.junjie.pro",
+        recordType: "CNAME",
+        targets: [
+          "e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com",
+        ],
+      },
+    ],
+  },
+}

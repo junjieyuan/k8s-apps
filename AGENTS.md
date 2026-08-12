@@ -67,6 +67,11 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   `helm template` handles but plain YAML cannot express concisely. For
   a simple deployment + service + route, use plain Kustomize without
   `helmCharts`.
+- **KYAML for all YAML** — every `*.yaml` file in this repo is written in
+  KYAML, the flow-style YAML dialect from KEP 5295 (see KYAML style below).
+  Format with Google's `yamlfmt` using the repo-root `.yamlfmt` config:
+  `yamlfmt <file>` applies, `yamlfmt -dry <file>` previews, and
+  `yamlfmt -lint <dir>` is the CI/enforcement check.
 - **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
   for locating sibling files.
 
@@ -141,9 +146,22 @@ be changed with one-off commands:
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 
-### YAML style
+### KYAML style
 
-- 2-space indentation.
+All YAML in this repo is **KYAML** — the strict flow-style YAML dialect
+proposed in KEP 5295 and explained in the Kubernetes blog post
+[How to Pretty-Print Your Kubernetes YAML as KYAML](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/).
+Every KYAML file is valid YAML, so `kubectl`, Kustomize, and Helm consume it
+unchanged.
+
+- **Structure is explicit, not indentation-dependent** — maps use `{}`,
+  lists use `[]`, string values are double-quoted (no silent type coercion),
+  trailing commas are kept, and each document starts with a `---` header.
+  Comments are allowed, unlike JSON.
+- **Format with `yamlfmt`** — Google's `yamlfmt` with the repo-root `.yamlfmt`
+  config (`formatter.type: kyaml`). Preview with
+  `yamlfmt -dry <file>`, apply with `yamlfmt <file>` (or `yamlfmt <dir>`),
+  enforce with `yamlfmt -lint`.
 - **No redundant defaults** — omit YAML fields that match Kubernetes defaults
   (e.g. `protocol: TCP`, `replicas: 1`, `terminationGracePeriodSeconds:
   30`). Only include explicit overrides so intentional deviations stand out.
@@ -157,6 +175,12 @@ be changed with one-off commands:
   silently ignored by Helm. Check keys against the pinned chart version
   (`helm show values <chart> --version <v>`) and confirm the effect with
   `kubectl diff` after applying.
+- **Not YAML** — `.env*` files are dotenv input for Kustomize
+  `secretGenerator`, and `*.json` files (e.g. `credentials.json.example`)
+  stay JSON. Vendored Helm chart sources under gitignored `*/charts/` are
+  third-party and are not reformatted. Dated plan docs under
+  `docs/superpowers/plans/` are historical records; their inline examples
+  keep the YAML style from when the plan was written.
 
 ### Gateway design
 
@@ -181,6 +205,7 @@ Before declaring any application "done", verify every item.
 This applies to new apps and upgrades alike.
 
 - **Version consistency** — image tag pinned via `images.newTag:` in `kustomization.yaml`/chart version via `helmCharts[].version`.
+- **KYAML formatting** — every `*.yaml` in the change is KYAML-formatted; `yamlfmt -lint <app>/` passes (or `yamlfmt -dry` shows no diff).
 - **Manifests** — no `${VAR}` placeholders in non-kustomize YAML. Secrets use `secretGenerator` (plain) or `values-secret.yaml` (helmCharts).
 - **Idempotency** — re-running deploy command produces no-op.
 - **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready. `kubectl get httproute -n <ns>` shows accepted with gateway ref bound.

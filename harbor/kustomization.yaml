@@ -1,17 +1,21 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-namespace: harbor
-
-helmCharts:
-  - name: harbor
-    repo: https://helm.goharbor.io
-    version: "1.19.2" # Harbor OSS v2.15.2
-    releaseName: harbor
-    valuesFile: values.yaml
-    additionalValuesFiles:
-      - values-secret.yaml
-
-resources:
-  - namespace.yaml
-  - httproute.yaml
-  - dnsendpoint.yaml
+---
+{
+  apiVersion: "kustomize.config.k8s.io/v1beta1",
+  kind: "Kustomization",
+  namespace: "harbor",
+  helmCharts: [{
+    name: "harbor",
+    repo: "https://helm.goharbor.io",
+    version: "1.19.2", # Harbor OSS v2.15.2
+    releaseName: "harbor",
+    valuesFile: "values.yaml",
+    additionalValuesFiles: [
+      "values-secret.yaml",
+    ],
+  }],
+  resources: [
+    "namespace.yaml",
+    "httproute.yaml",
+    "dnsendpoint.yaml",
+  ],
+}

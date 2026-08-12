@@ -1,18 +1,29 @@
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: auth-service
-spec:
-  parentRefs:
-    - name: gateway
-      namespace: gateway
-  hostnames:
-    - auth.junjie.pro
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: auth-service
-          port: 8080
+---
+{
+  apiVersion: "gateway.networking.k8s.io/v1",
+  kind: "HTTPRoute",
+  metadata: {
+    name: "auth-service",
+  },
+  spec: {
+    parentRefs: [{
+      name: "gateway",
+      namespace: "gateway",
+    }],
+    hostnames: [
+      "auth.junjie.pro",
+    ],
+    rules: [{
+      matches: [{
+        path: {
+          type: "PathPrefix",
+          value: "/",
+        },
+      }],
+      backendRefs: [{
+        name: "auth-service",
+        port: 8080,
+      }],
+    }],
+  },
+}

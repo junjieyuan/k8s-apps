@@ -37,6 +37,7 @@ auth-service/       Authentication service (multi-environment)
 - cert-manager (from `k8s-cluster`) — required for TLS; optional for HTTP-only
 - `kubectl` configured
 - `helm` — required for apps using the Kustomize `helmCharts` generator (see the Applications table for which)
+- `yamlfmt` (google/yamlfmt) — formats YAML as KYAML (see Conventions)
 - GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server, comfyui)
 
 ## Usage
@@ -86,6 +87,26 @@ kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 
 Trivy scanning is disabled to keep the footprint small; to enable it later, set
 `trivy.enabled: true` in `harbor/values.yaml`.
+
+## Conventions
+
+### YAML is KYAML
+
+Every YAML file in this repo is written in **KYAML**, the flow-style YAML
+dialect proposed in
+[KEP 5295](https://www.kubernetes.dev/resources/keps/5295/):
+`---` header, `{}` for maps, `[]` for lists, double-quoted strings, trailing
+commas. KYAML is valid YAML, so the `kubectl apply -k` and
+`kubectl kustomize --enable-helm` workflows are unchanged.
+
+Format with Google's `yamlfmt` (the repo-root `.yamlfmt` config enables the
+kyaml formatter):
+
+```bash
+yamlfmt -dry <file>   # preview without modifying
+yamlfmt <file>        # format in place
+yamlfmt -lint <app>/  # enforce (CI-friendly)
+```
 
 ## Architecture
 

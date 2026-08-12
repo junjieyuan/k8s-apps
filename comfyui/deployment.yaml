@@ -1,127 +1,187 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: comfyui
-  labels:
-    app: comfyui
-spec:
-  # 0 by default: the single RTX 4080 (16GB) is shared with llama-server, and
-  # both cannot run inference at once. To use ComfyUI, set this to 1, scale
-  # llama-server to 0, and apply; switch back afterwards. Recreate (not rolling)
-  # because the pod owns the GPU and the NFS-mounted user profile, so a rolling
-  # update would run two instances fighting over both.
-  replicas: 0
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app: comfyui
-  template:
-    metadata:
-      labels:
-        app: comfyui
-    spec:
-      # GPU-only: the image is a CUDA 13 build, and the shared HF cache (see
-      # persistentvolume.yaml) only exists on the NVIDIA node, so scheduling must
-      # match the volume's node affinity. seLinuxOptions.type: spc_t makes CRI-O
-      # skip SELinux relabeling of the read-only virtiofs cache (same fix as
-      # llama-server); relabeling would fail with EROFS. No fsGroup: the image
-      # runs as root and the NFS export uses no_root_squash.
-      securityContext:
-        seLinuxOptions:
-          type: spc_t
-      nodeSelector:
-        feature.node.kubernetes.io/pci-10de.present: "true"
-      containers:
-        - name: comfyui
+---
+{
+  apiVersion: "apps/v1",
+  kind: "Deployment",
+  metadata: {
+    name: "comfyui",
+    labels: {
+      app: "comfyui",
+    },
+  },
+  spec: {
+    # 0 by default: the single RTX 4080 (16GB) is shared with llama-server, and
+    # both cannot run inference at once. To use ComfyUI, set this to 1, scale
+    # llama-server to 0, and apply; switch back afterwards. Recreate (not rolling)
+    # because the pod owns the GPU and the NFS-mounted user profile, so a rolling
+    # update would run two instances fighting over both.
+    replicas: 0,
+    strategy: {
+      type: "Recreate",
+    },
+    selector: {
+      matchLabels: {
+        app: "comfyui",
+      },
+    },
+    template: {
+      metadata: {
+        labels: {
+          app: "comfyui",
+        },
+      },
+      spec: {
+        # GPU-only: the image is a CUDA 13 build, and the shared HF cache (see
+        # persistentvolume.yaml) only exists on the NVIDIA node, so scheduling must
+        # match the volume's node affinity. seLinuxOptions.type: spc_t makes CRI-O
+        # skip SELinux relabeling of the read-only virtiofs cache (same fix as
+        # llama-server); relabeling would fail with EROFS. No fsGroup: the image
+        # runs as root and the NFS export uses no_root_squash.
+        securityContext: {
+          seLinuxOptions: {
+            type: "spc_t",
+          },
+        },
+        nodeSelector: {
+          feature.node.kubernetes.io/pci-10de.present: "true",
+        },
+        containers: [{
+          name: "comfyui",
           # Pinned tag for reproducible deploys (AGENTS.md); the tag the docker
           # command this app was converted from used.
-          image: docker.io/yanwk/comfyui-boot:cu130-slim-v2-20260808
-          ports:
-            - containerPort: 8188
-              name: http
-          resources:
-            limits:
-              nvidia.com/gpu: 1
-              memory: 32Gi
-            requests:
-              nvidia.com/gpu: 1
-              memory: 8Gi
-              cpu: 2
-          env:
+          image: "docker.io/yanwk/comfyui-boot:cu130-slim-v2-20260808",
+          ports: [{
+            containerPort: 8188,
+            name: "http",
+          }],
+          resources: {
+            limits: {
+              nvidia.com/gpu: 1,
+              memory: "32Gi",
+            },
+            requests: {
+              nvidia.com/gpu: 1,
+              memory: "8Gi",
+              cpu: 2,
+            },
+          },
+          env: [
             # Reuse the cache llama-server already populated instead of letting
             # huggingface_hub-based nodes re-download into NFS. /hf-cache is a
             # top-level mount on purpose: nesting it under the writable ~/.cache
             # volume would rely on fragile sub-mounts inside a subPath volume.
-            - name: HF_HUB_CACHE
-              value: /hf-cache
+            {
+              name: "HF_HUB_CACHE",
+              value: "/hf-cache",
+            },
             # Keep torch.hub downloads in their own subPath (as the original
             # docker command did) instead of mixing them into the ~/.cache data.
-            - name: TORCH_HOME
-              value: /torch-hub
-          volumeMounts:
-            - name: hf-cache
-              mountPath: /hf-cache
-              readOnly: true
-            - name: data
-              mountPath: /root/.cache
-              subPath: dot-cache
-            - name: data
-              mountPath: /root/.config
-              subPath: dot-config
-            - name: data
-              mountPath: /root/.local
-              subPath: dot-local
-            - name: data
-              mountPath: /root/ComfyUI/custom_nodes
-              subPath: custom_nodes
+            {
+              name: "TORCH_HOME",
+              value: "/torch-hub",
+            },
+          ],
+          volumeMounts: [
+            {
+              name: "hf-cache",
+              mountPath: "/hf-cache",
+              readOnly: true,
+            },
+            {
+              name: "data",
+              mountPath: "/root/.cache",
+              subPath: "dot-cache",
+            },
+            {
+              name: "data",
+              mountPath: "/root/.config",
+              subPath: "dot-config",
+            },
+            {
+              name: "data",
+              mountPath: "/root/.local",
+              subPath: "dot-local",
+            },
+            {
+              name: "data",
+              mountPath: "/root/ComfyUI/custom_nodes",
+              subPath: "custom_nodes",
+            },
             # models/ is an emptyDir (not persistent) but must be writable: the
             # boot image copies the standard model subdirectories into it on
             # every fresh start and aborts if the copy fails. Real models load
             # exclusively via extra_model_paths.yaml from the shared cache, so
             # anything written here dies with the pod.
-            - name: models
-              mountPath: /root/ComfyUI/models
-            - name: data
-              mountPath: /torch-hub
-              subPath: torch-hub
-            - name: data
-              mountPath: /root/ComfyUI/input
-              subPath: input
-            - name: data
-              mountPath: /root/ComfyUI/output
-              subPath: output
-            - name: data
-              mountPath: /root/ComfyUI/user
-              subPath: user-profile
-            - name: data
-              mountPath: /root/user-scripts
-              subPath: user-scripts
+            {
+              name: "models",
+              mountPath: "/root/ComfyUI/models",
+            },
+            {
+              name: "data",
+              mountPath: "/torch-hub",
+              subPath: "torch-hub",
+            },
+            {
+              name: "data",
+              mountPath: "/root/ComfyUI/input",
+              subPath: "input",
+            },
+            {
+              name: "data",
+              mountPath: "/root/ComfyUI/output",
+              subPath: "output",
+            },
+            {
+              name: "data",
+              mountPath: "/root/ComfyUI/user",
+              subPath: "user-profile",
+            },
+            {
+              name: "data",
+              mountPath: "/root/user-scripts",
+              subPath: "user-scripts",
+            },
             # Mounted as a single file (subPath) so the rest of the image's
             # ComfyUI install is untouched; the ConfigMap content hash triggers
             # a rollout whenever the mapping changes.
-            - name: config
-              mountPath: /root/ComfyUI/extra_model_paths.yaml
-              subPath: extra_model_paths.yaml
-              readOnly: true
+            {
+              name: "config",
+              mountPath: "/root/ComfyUI/extra_model_paths.yaml",
+              subPath: "extra_model_paths.yaml",
+              readOnly: true,
+            },
+          ],
           # Readiness only — no liveness: /system_stats is served by the ComfyUI
           # API, and a liveness probe could kill the pod while a long model load
           # blocks the event loop.
-          readinessProbe:
-            httpGet:
-              path: /system_stats
-              port: 8188
-            initialDelaySeconds: 30
-            periodSeconds: 10
-      volumes:
-        - name: hf-cache
-          persistentVolumeClaim:
-            claimName: comfyui-hf-cache
-        - name: data
-          persistentVolumeClaim:
-            claimName: comfyui-data
-        - name: models
-          emptyDir: {}
-        - name: config
-          configMap:
-            name: comfyui-config
+          readinessProbe: {
+            httpGet: {
+              path: "/system_stats",
+              port: 8188,
+            },
+            initialDelaySeconds: 30,
+            periodSeconds: 10,
+          },
+        }],
+        volumes: [{
+          name: "hf-cache",
+          persistentVolumeClaim: {
+            claimName: "comfyui-hf-cache",
+          },
+        }, {
+          name: "data",
+          persistentVolumeClaim: {
+            claimName: "comfyui-data",
+          },
+        }, {
+          name: "models",
+          emptyDir: {},
+        }, {
+          name: "config",
+          configMap: {
+            name: "comfyui-config",
+          },
+        }],
+      },
+    },
+  },
+}

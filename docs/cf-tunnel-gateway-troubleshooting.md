@@ -64,15 +64,15 @@
 **解决方案**：重新运行仓库中的 Cilium 安装/升级脚本：
 
 ```bash
-./infrastructure/network-cilium/install.sh --version 1.19.6
+kubectl kustomize --enable-helm infrastructure/cilium/ | kubectl apply -f -
 ```
 
-该脚本执行 `cilium upgrade`，Cilium 会自动重新创建 `cilium-secrets` namespace、相关的 Roles 和 RoleBindings。
+kustomize 渲染 Cilium chart 时会自动重新创建 `cilium-secrets` namespace、相关的 Roles 和 RoleBindings。
 
 **教训**：
 
 - `cilium-secrets` 是 Cilium Gateway API 的核心依赖，不应手动删除
-- `cilium upgrade` 是恢复 Cilium 内部资源的标准方法，比手动 patch 更可靠
+- 重新执行 kustomize apply 是恢复 Cilium 内部资源的标准方法，比手动 patch 更可靠
 - 部署后还需重启 `cilium-operator` 才能触发证书同步：`kubectl rollout restart deployment/cilium-operator -n kube-system`
 
 ---

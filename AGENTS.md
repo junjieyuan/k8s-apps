@@ -195,6 +195,12 @@ unchanged.
   (configured in `k8s-cluster`).
 - **IP pinning** — in bare-metal environments without BGP, pin the LB IP via
   `spec.addresses` so it survives Gateway deletion and recreation.
+- **Cloudflare proxy is the global default** — external-dns in `k8s-cluster`
+  runs with `--cloudflare-proxied`, so every DNSEndpoint is proxied unless
+  overridden. To make a specific record DNS-only, set `providerSpecific` with
+  the full annotation key `external-dns.alpha.kubernetes.io/cloudflare-proxied`
+  and value `"false"` — the value is the string `"true"`/`"false"`, not a YAML
+  boolean.
 - **Cross-namespace routes** — HTTPRoutes reference the Gateway via
   `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from:
   All` enables this without per-app ReferenceGrants.

@@ -23,22 +23,35 @@
 
 **现象**：DNS 记录创建成功，但 Cloudflare Dashboard 显示未 proxied。Tunnel 连接预检全部 PASS 但控制流仍然失败。
 
-**原因**：external-dns 缺少 `--cloudflare-proxied` 参数。虽然 DNSEndpoint CR 中声明了 `proxied: "true"`，但 external-dns 需要命令行参数才去处理这个字段。
+**原因**：DNSEndpoint 里写的是裸 `proxied` 键名，而 external-dns 的 Cloudflare provider 只认完整注解键名 `external-dns.alpha.kubernetes.io/cloudflare-proxied`；键名不匹配时该字段被忽略。
 
-**解决方案**：在 external-dns Helm chart 的 values.yaml 中添加：
+**解决方案**（当前做法）：代理是全局默认——k8s-cluster 的 external-dns 带 `--cloudflare-proxied` 参数（`infrastructure/external-dns/values.yaml` 的 `extraArgs.cloudflare-proxied: true`），所有 DNSEndpoint 记录默认 proxied，清单里无需声明。仅当某条记录需要 DNS-only 时，才用完整注解键名写 `"false"` 覆盖：
 
 ```yaml
 ---
 {
-  extraArgs: {
-    cloudflare-proxied: true,
+  apiVersion: "externaldns.k8s.io/v1alpha1",
+  kind: "DNSEndpoint",
+  metadata: {
+    name: "example",
+  },
+  spec: {
+    endpoints: [{
+      dnsName: "example.junjie.pro",
+      recordType: "CNAME",
+      providerSpecific: [{
+        name: "external-dns.alpha.kubernetes.io/cloudflare-proxied",
+        value: "false",
+      }],
+      targets: [
+        "...cfargotunnel.com",
+      ],
+    }],
   },
 }
 ```
 
-Helm chart 值 `extraArgs` 中的 `cloudflare-proxied: true`（布尔值）会生成 `--cloudflare-proxied`（无值参数）。错误写法 `cloudflareProxied: true` 不符合 chart 的 values schema，不会生效。
-
-**教训**：external-dns 的 Cloudflare provider 对 proxied 的支持需要显式参数。DNSEndpoint 中的 `providerSpecific.proxied` 字段只包含数据，启用行为需要 `--cloudflare-proxied` 参数。
+**教训**：代理默认走全局参数；按记录覆盖时键名必须用完整注解键名。`value` 是字符串 `"true"`/`"false"`，需带引号（CRD schema 为 string，写成 YAML 布尔值会被 API server 拒绝）。TXT/MX/NS/SPF/SRV/LOC 类型不支持代理（CNAME 支持）。
 
 ---
 

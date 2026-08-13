@@ -12,7 +12,6 @@
 - `llama-server/dnsendpoint.yaml`
 - `monitoring/dnsendpoint.yaml`
 - `headlamp/dnsendpoint.yaml`
-- `auth-service/base/dnsendpoint.yaml`
 - `docs/cf-tunnel-gateway.md`
 
 **教训**：本地管理的 Tunnel（`cloudflared tunnel create`）和 Dashboard 管理的 Tunnel ID 不同，迁移时需确认实际 ID。
@@ -148,7 +147,6 @@ x509: certificate is valid for *.junjie.pro, not cilium-gateway-gateway.gateway
 |------|-----|------|--------|
 | Grafana | `grafana.junjie.pro` | ✅ | 302 → /login |
 | Headlamp | `headlamp.junjie.pro` | ✅ | 200 |
-| Auth | `auth.junjie.pro` | ✅ | 404 (API) |
 | Llama | `llama.junjie.pro` | ✅ | 200 |
 
 所有服务公网可访问，cookie 域名统一为 `*.junjie.pro`。

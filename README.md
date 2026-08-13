@@ -14,7 +14,6 @@ harbor/             Container registry (Kustomize + Helm chart)
 keycloak/           Identity and access management (Keycloak 26)
 llama-server/       llama.cpp inference server
 comfyui/            ComfyUI image generation (GPU)
-auth-service/       Authentication service (multi-environment)
 ```
 
 ## Applications
@@ -30,7 +29,6 @@ auth-service/       Authentication service (multi-environment)
 | **harbor** | Container registry (Harbor OSS v2.15.2) | Kustomize (helmCharts) |
 | **keycloak** | Identity and access management (Keycloak 26.7.1) | Deployment, Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
-| **auth-service** | Authentication service (multi-environment: dev/staging/prod) | Deployment, Kustomize |
 
 ## Prerequisites
 
@@ -65,9 +63,6 @@ kubectl apply -k comfyui/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 
-# 4. Auth (multi-environment)
-kubectl apply -k auth-service/overlays/dev/
-bash auth-service/db-setup.sh --env dev
 ```
 
 ### Keycloak
@@ -143,8 +138,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
-                  ├─ keycloak.junjie.pro           → keycloak:8080
-                  └─ auth.junjie.pro               → auth-service:8080
+                  └─ keycloak.junjie.pro           → keycloak:8080
 
-  postgres (ClusterIP, no external route) → accessed internally by auth-service
+  postgres (ClusterIP, no external route) → accessed internally by keycloak
 ```

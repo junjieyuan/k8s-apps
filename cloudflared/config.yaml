@@ -31,14 +31,6 @@
       originServerName: "headlamp.junjie.pro",
     },
     {
-      hostname: "auth.junjie.pro",
-      service: "https://cilium-gateway-gateway.gateway:443",
-      originRequest: {
-        noTLSVerify: true,
-      },
-      originServerName: "auth.junjie.pro",
-    },
-    {
       hostname: "grafana.junjie.pro",
       service: "https://cilium-gateway-gateway.gateway:443",
       originRequest: {

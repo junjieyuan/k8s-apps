@@ -35,7 +35,7 @@ cloudflared pod (3 replicas)
     │    • llama.junjie.pro              → llama-server:8080             │
     │    • grafana.junjie.pro → kube-prometheus-stack-grafana:80 │
     │    • headlamp.junjie.pro → headlamp:80               │
-    │    • auth.junjie.pro → auth-service:8080             │
+    │    • keycloak.junjie.pro → keycloak:8080               │
     └─────────────────────────────────────────────────────┘
 ```
 
@@ -151,11 +151,6 @@ ingress:
     originRequest:
       noTLSVerify: true
     originServerName: headlamp.junjie.pro
-  - hostname: auth.junjie.pro
-    service: https://cilium-gateway-gateway.gateway:443
-    originRequest:
-      noTLSVerify: true
-    originServerName: auth.junjie.pro
   - hostname: grafana.junjie.pro
     service: https://cilium-gateway-gateway.gateway:443
     originRequest:
@@ -224,7 +219,6 @@ kubectl apply -k gateway/
 
 ```bash
 kubectl apply -k llama-server/
-kubectl apply -k auth-service/overlays/dev/
 kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 ```
@@ -250,7 +244,6 @@ infrastructure/external-dns/deploy.sh
 
 ```bash
 kubectl apply -k llama-server/
-kubectl apply -k auth-service/overlays/dev/
 kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 ```
@@ -282,7 +275,6 @@ kubectl logs -n cloudflared deployment/cloudflared
 curl -I https://grafana.junjie.pro
 curl -I https://llama.junjie.pro
 curl -I https://headlamp.junjie.pro
-curl -I https://auth.junjie.pro
 ```
 
 ### 步骤 8：清理
@@ -316,9 +308,6 @@ k8s-apps/
   monitoring/
     httproute.yaml           hostname: grafana.junjie.pro
     dnsendpoint.yaml         CNAME → tunnel
-  auth-service/
-    base/httproute.yaml      hostname: auth.junjie.pro
-    base/dnsendpoint.yaml    CNAME → tunnel
 ```
 
 ## 参考

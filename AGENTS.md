@@ -19,8 +19,7 @@ to verify idempotency.
 
 Each app lives in its own directory. The canonical layout varies by stack:
 - **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
-  auth-service) — described in detail under Shell & tools.
-  Multi-environment apps use `base/` + `overlays/<env>/` (auth-service).
+  keycloak) — described in detail under Shell & tools.
   Direct deploy: `kubectl apply -k <app>/`.
 - **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
   under Shell & tools. Deploy: `kubectl kustomize --enable-helm <app>/ |
@@ -140,9 +139,8 @@ be changed with one-off commands:
   - Plain Kustomize apps: pin via `images.newTag:` in `kustomization.yaml`.
   - `helmCharts` apps: pin via `helmCharts[].version` in `kustomization.yaml`.
 - **Container images** — prefer explicit build tags (e.g.
-  `server-cuda12-b9894`), but floating tags (e.g. `latest`) are
-  acceptable for dev-iteration apps (auth-service) paired with
-  `imagePullPolicy: Always`.
+  `server-cuda12-b9894`); avoid `latest` unless paired
+  with `imagePullPolicy: Always`.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 

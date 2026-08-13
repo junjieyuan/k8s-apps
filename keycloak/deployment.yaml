@@ -1,0 +1,135 @@
+---
+{
+  apiVersion: "apps/v1",
+  kind: "Deployment",
+  metadata: {
+    name: "keycloak",
+  },
+  spec: {
+    selector: {
+      matchLabels: {
+        app: "keycloak",
+      },
+    },
+    template: {
+      metadata: {
+        labels: {
+          app: "keycloak",
+        },
+      },
+      spec: {
+        containers: [{
+          name: "keycloak",
+          image: "quay.io/keycloak/keycloak",
+          args: [
+            "start",
+          ],
+          ports: [{
+            containerPort: 8080,
+            name: "http",
+          }, {
+            # Management interface: health endpoints (KC_HEALTH_ENABLED=true).
+            containerPort: 9000,
+            name: "management",
+          }],
+          resources: {
+            requests: {
+              cpu: "250m",
+              memory: "512Mi",
+            },
+            limits: {
+              cpu: 2,
+              memory: "1536Mi",
+            },
+          },
+          env: [
+            # Bootstrap admin is created on first startup only; credentials live
+            # in the gitignored .env secret.
+            {
+              name: "KC_BOOTSTRAP_ADMIN_USERNAME",
+              valueFrom: {
+                secretKeyRef: {
+                  name: "keycloak-credentials",
+                  key: "KEYCLOAK_ADMIN_USERNAME",
+                },
+              },
+            },
+            {
+              name: "KC_BOOTSTRAP_ADMIN_PASSWORD",
+              valueFrom: {
+                secretKeyRef: {
+                  name: "keycloak-credentials",
+                  key: "KEYCLOAK_ADMIN_PASSWORD",
+                },
+              },
+            },
+            # Shared PostgreSQL from postgres/; role/database provisioned by
+            # db-setup.sh.
+            {
+              name: "KC_DB",
+              value: "postgres",
+            },
+            {
+              name: "KC_DB_URL",
+              value: "jdbc:postgresql://postgres.postgres.svc.cluster.local:5432/keycloak",
+            },
+            {
+              name: "KC_DB_USERNAME",
+              value: "keycloak",
+            },
+            {
+              name: "KC_DB_PASSWORD",
+              valueFrom: {
+                secretKeyRef: {
+                  name: "keycloak-credentials",
+                  key: "KC_DB_PASSWORD",
+                },
+              },
+            },
+            # TLS terminates at the shared Gateway (gateway/), so Keycloak
+            # serves plain HTTP internally and rebuilds the public https://
+            # scheme/host from the proxy headers.
+            {
+              name: "KC_HTTP_ENABLED",
+              value: "true",
+            },
+            {
+              name: "KC_PROXY_HEADERS",
+              value: "xforwarded",
+            },
+            {
+              name: "KC_HOSTNAME",
+              value: "https://keycloak.junjie.pro",
+            },
+            {
+              name: "KC_HEALTH_ENABLED",
+              value: "true",
+            },
+          ],
+          startupProbe: {
+            httpGet: {
+              path: "/health/started",
+              port: 9000,
+            },
+            periodSeconds: 5,
+            failureThreshold: 120,
+          },
+          readinessProbe: {
+            httpGet: {
+              path: "/health/ready",
+              port: 9000,
+            },
+            periodSeconds: 10,
+          },
+          livenessProbe: {
+            httpGet: {
+              path: "/health/live",
+              port: 9000,
+            },
+            periodSeconds: 10,
+          },
+        }],
+      },
+    },
+  },
+}

@@ -11,6 +11,7 @@ postgres/           PostgreSQL with persistent storage
 monitoring/         Prometheus + Grafana (Kustomize + Helm chart)
 headlamp/           Kubernetes dashboard (Kustomize + Helm chart)
 harbor/             Container registry (Kustomize + Helm chart)
+keycloak/           Identity and access management (Keycloak 26)
 llama-server/       llama.cpp inference server
 comfyui/            ComfyUI image generation (GPU)
 auth-service/       Authentication service (multi-environment)
@@ -27,6 +28,7 @@ auth-service/       Authentication service (multi-environment)
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **harbor** | Container registry (Harbor OSS v2.15.2) | Kustomize (helmCharts) |
+| **keycloak** | Identity and access management (Keycloak 26.7.1) | Deployment, Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 | **auth-service** | Authentication service (multi-environment: dev/staging/prod) | Deployment, Kustomize |
 
@@ -66,6 +68,25 @@ kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 # 4. Auth (multi-environment)
 kubectl apply -k auth-service/overlays/dev/
 bash auth-service/db-setup.sh --env dev
+```
+
+### Keycloak
+
+Keycloak serves plain HTTP internally — TLS terminates at the shared Gateway.
+The admin console is at `https://keycloak.junjie.pro/admin`. State lives in the
+shared PostgreSQL from `postgres/` (no PVC).
+
+```bash
+# 1. Secret values (gitignored): bootstrap admin + DB role password
+cp keycloak/.env.example keycloak/.env
+# edit keycloak/.env with real passwords
+
+# 2. Provision role + database on the shared postgres, then deploy
+bash keycloak/db-setup.sh
+kubectl apply -k keycloak/
+
+# 3. Add the hostname to the Cloudflare tunnel ingress
+kubectl apply -k cloudflared/
 ```
 
 ### Harbor
@@ -122,6 +143,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
+                  ├─ keycloak.junjie.pro           → keycloak:8080
                   └─ auth.junjie.pro               → auth-service:8080
 
   postgres (ClusterIP, no external route) → accessed internally by auth-service

@@ -22,7 +22,7 @@ comfyui/            ComfyUI image generation (GPU)
 |-----|-------------|-------|
 | **gateway** | Shared Cilium Gateway + wildcard TLS certificate | Cilium Gateway API, cert-manager |
 | **cloudflared** | Cloudflare Tunnel client for external access | Deployment, Kustomize |
-| **llama-server** | llama.cpp inference server (Gemma 4, Qwen 3.6) | GPU (RTX 4080), Kustomize |
+| **llama-server** | llama.cpp inference server (multi-model router) | GPU (RTX 4080), Kustomize |
 | **comfyui** | ComfyUI image generation (stable diffusion / flux workflows) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |

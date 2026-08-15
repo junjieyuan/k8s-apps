@@ -219,3 +219,4 @@ This applies to new apps and upgrades alike.
 
 - Atomic commits following [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 - Each commit changes one logical concern.
+- Wrap the commit message subject at ~50 chars and body lines at ~72 chars.

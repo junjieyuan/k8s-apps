@@ -12,8 +12,12 @@
       },
     },
     endpoints: [{
+      # Intentionally points at a non-existent path: any request to /metrics
+      # triggers a model load/switch, so the scrape must never reach it
+      # (https://github.com/ggml-org/llama.cpp/issues/23096). Kept so the
+      # target stays visible (dashboards don't break) while scraping fails.
       port: "http",
-      path: "/metrics",
+      path: "/metrics-disabled",
       interval: "30s",
       params: {
         model: [

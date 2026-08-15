@@ -32,7 +32,7 @@ cloudflared pod (3 replicas)
            │ HTTPRoute[host: *.junjie.pro]
     ┌──────┴──────────────────────────────────────────────┐
     │  Backend Services                                   │
-    │    • llama.junjie.pro              → llama-server:8080             │
+    │    • llama.junjie.pro              → llama-server:9931             │
     │    • grafana.junjie.pro → kube-prometheus-stack-grafana:80 │
     │    • headlamp.junjie.pro → headlamp:80               │
     │    • keycloak.junjie.pro → keycloak:8080               │

@@ -36,7 +36,7 @@
           name: "llama-server",
           image: "ghcr.io/ggml-org/llama.cpp:server-cuda13-b10423",
           ports: [{
-            containerPort: 8080,
+            containerPort: 9931,
             name: "http",
           }],
           resources: {
@@ -51,6 +51,9 @@
             },
           },
           env: [{
+            name: "LLAMA_ARG_PORT",
+            value: "9931",
+          }, {
             name: "LLAMA_ARG_CACHE_TYPE_K",
             value: "q8_0",
           }, {
@@ -95,7 +98,7 @@
           livenessProbe: {
             httpGet: {
               path: "/health",
-              port: 8080,
+              port: 9931,
             },
             initialDelaySeconds: 30,
             periodSeconds: 10,
@@ -103,7 +106,7 @@
           readinessProbe: {
             httpGet: {
               path: "/health",
-              port: 8080,
+              port: 9931,
             },
             initialDelaySeconds: 10,
             periodSeconds: 5,

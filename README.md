@@ -133,7 +133,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
       └─ https://cilium-gateway-gateway.gateway:443 (originServerName = SNI)
           └─ Cilium Gateway (shared, namespace: gateway, pinned IP: 192.168.200.200)
               └─ HTTPRoute[host: *.junjie.pro]
-                  ├─ llama.junjie.pro              → llama-server:8080
+                  ├─ llama.junjie.pro              → llama-server:9931
                   ├─ comfyui.junjie.pro            → comfyui:8188
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80

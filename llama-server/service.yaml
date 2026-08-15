@@ -13,8 +13,8 @@
       app: "llama-server",
     },
     ports: [{
-      port: 8080,
-      targetPort: 8080,
+      port: 9931,
+      targetPort: 9931,
       name: "http",
     }],
   },

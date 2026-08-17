@@ -32,7 +32,7 @@
     loras: "loras",
   },
   minimax_h3: {
-    base_path: "/hf-cache/models--Comfy-Org--MiniMax-H3/snapshots/014cd40f7e177756c6b2473c0d93b1c89a790dd2",
+    base_path: "/hf-cache/models--Comfy-Org--MiniMax-H3/snapshots/dc559027db79c174125df4d827db55cd11178860",
     diffusion_models: "diffusion_models",
     text_encoders: "text_encoders",
     vae: "vae",

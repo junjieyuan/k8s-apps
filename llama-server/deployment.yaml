@@ -34,7 +34,7 @@
         },
         containers: [{
           name: "llama-server",
-          image: "ghcr.io/ggml-org/llama.cpp:server-cuda13-b10423",
+          image: "ghcr.io/ggml-org/llama.cpp:server-cuda13-b10481",
           ports: [{
             containerPort: 9931,
             name: "http",

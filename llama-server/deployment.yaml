@@ -60,6 +60,9 @@
             name: "LLAMA_ARG_CACHE_TYPE_V",
             value: "q8_0",
           }, {
+            name: "LLAMA_ARG_FIT_TARGET",
+            value: "128",
+          }, {
             name: "LLAMA_ARG_LOG_TIMESTAMPS",
             value: "true",
           }, {

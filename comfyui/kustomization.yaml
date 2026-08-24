@@ -15,6 +15,10 @@
     "httproute.yaml",
     "dnsendpoint.yaml",
   ],
+  images: [{
+    name: "docker.io/yanwk/comfyui-boot",
+    newTag: "cu130-slim-v2-20260808@sha256:133df7fb7f566fab7e02d4fe7d4262b687fd658c8d75e5fafdd0cff008d742fe",
+  }],
   configMapGenerator: [{
     name: "comfyui-config",
     files: [

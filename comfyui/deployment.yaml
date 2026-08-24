@@ -46,9 +46,7 @@
         },
         containers: [{
           name: "comfyui",
-          # Pinned tag for reproducible deploys (AGENTS.md); the tag the docker
-          # command this app was converted from used.
-          image: "docker.io/yanwk/comfyui-boot:cu130-slim-v2-20260808",
+          image: "docker.io/yanwk/comfyui-boot",
           ports: [{
             containerPort: 8188,
             name: "http",

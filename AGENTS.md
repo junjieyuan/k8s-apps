@@ -211,12 +211,23 @@ unchanged.
 Before declaring any application "done", verify every item.
 This applies to new apps and upgrades alike.
 
-- **Version consistency** — image tag pinned via `images.newTag:` in `kustomization.yaml`/chart version via `helmCharts[].version`.
+- **Version consistency** — the rendered image equals the pinned
+  reference — `kubectl kustomize <app>/ | grep image:` (`--enable-helm`
+  for helmCharts apps); a rendered image without tag/digest means the
+  `images` transformer didn't match (silent failure) — check
+  `images[].name` against the deployment's image.
 - **KYAML formatting** — every `*.yaml` in the change is KYAML-formatted; `yamlfmt -lint <app>/` passes (or `yamlfmt -dry` shows no diff).
 - **Manifests** — no `${VAR}` placeholders in non-kustomize YAML. Secrets use `secretGenerator` (plain) or `values-secret.yaml` (helmCharts).
-- **Idempotency** — re-running deploy command produces no-op.
-- **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready. `kubectl get httproute -n <ns>` shows accepted with gateway ref bound.
-- **Cluster sync** — every running resource has a manifest. Image and `replicas:` in cluster match the manifest.
+- **Idempotency** — re-running the deploy command changes nothing. The check
+  is an empty diff, not the `apply` verb (it reports `configured` for
+  deployment/httproute even when nothing changed): `kubectl diff -k <app>/`
+  (plain apps) or `kubectl kustomize --enable-helm <app>/ | kubectl diff -f -`
+  (helmCharts apps) must show no output. Known exception: the monitoring
+  `admission-create` Job has a TTL, so it always diffs as a create.
+- **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready with RESTARTS=0. `kubectl get httproute -n <ns>`: `status.parents[].conditions` shows `Accepted=True`, `ResolvedRefs=True`.
+- **Cluster sync** — every running resource has a manifest.
+- **Committed** — the change is committed (see Commit conventions); an
+  uncommitted app change leaves the repo out of sync with the cluster.
 
 ## Commit conventions
 

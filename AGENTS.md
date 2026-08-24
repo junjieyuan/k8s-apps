@@ -138,9 +138,12 @@ be changed with one-off commands:
   `latest`), but keep them current. Check upstream releases before deployment.
   - Plain Kustomize apps: pin via `images.newTag:` in `kustomization.yaml`.
   - `helmCharts` apps: pin via `helmCharts[].version` in `kustomization.yaml`.
-- **Container images** — prefer explicit build tags (e.g.
-  `server-cuda12-b9894`); avoid `latest` unless paired
-  with `imagePullPolicy: Always`.
+- **Container images** — pin in `images.newTag` as `tag@digest` (tag for
+  humans, digest authoritative for pulls).
+- **Digest maintenance** — on a tag bump update BOTH halves of `newTag`.
+  The digest is the `Docker-Content-Digest` the registry returns for the
+  tag (`crane digest`, or the registry API header). A tag-only bump keeps
+  pulling the old artifact — digest wins.
 - **Gateway API** — CRD version must match the version supported by the CNI
   (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 

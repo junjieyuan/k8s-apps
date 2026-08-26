@@ -10,7 +10,7 @@
   ],
   images: [{
     name: "docker.io/library/postgres",
-    newTag: "18.4",
+    newTag: "18.6@sha256:1957b2ff3137e4ef7f3bc813e74fff50b1e1ffddc85c8b9d6f14ade972be8687",
   }],
   secretGenerator: [{
     name: "postgres-credentials",

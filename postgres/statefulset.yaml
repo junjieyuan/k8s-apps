@@ -54,6 +54,8 @@
             exec: {
               command: [
                 "pg_isready",
+                "-U",
+                "postgres",
               ],
             },
             initialDelaySeconds: 30,
@@ -62,6 +64,8 @@
             exec: {
               command: [
                 "pg_isready",
+                "-U",
+                "postgres",
               ],
             },
             initialDelaySeconds: 5,

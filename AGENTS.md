@@ -58,7 +58,11 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
     `kubectl kustomize --enable-helm <dir>/ | kubectl apply -f -`.
     `kustomize build --enable-helm <dir>/ | kubectl apply -f -` also works
     if standalone kustomize is installed. Version pinning goes in the
-    `helmCharts[].version` field; overrides in `valuesFile`.
+    `helmCharts[].version` field; overrides in `valuesFile`. The generator
+    renders only `templates/`, never `crds/`, so chart CRDs are not in
+    the deploy stream; deploy them per the project's CRD upgrade
+    documentation (e.g. kube-prometheus-stack: the chart repo's
+    UPGRADE.md).
 - **Helm** is used **only** via the Kustomize `helmCharts` generator
   — never `helm install` directly. This applies to complex charts
   (kube-prometheus-stack) and simple ones alike. The single exception is

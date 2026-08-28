@@ -52,6 +52,9 @@ kubectl apply -k postgres/
 # monitoring: create values-secret.yaml first, then deploy
 cp monitoring/values-secret.yaml.example monitoring/values-secret.yaml
 # edit monitoring/values-secret.yaml with real password
+kubectl kustomize --enable-helm monitoring/ | kubectl diff -f -
+# CRDs are not in the deploy stream (the helmCharts generator never
+# renders the chart's crds/); deploy per the chart's upgrade docs
 kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 
 # 3. Applications

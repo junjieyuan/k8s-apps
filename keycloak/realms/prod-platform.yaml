@@ -1,0 +1,19 @@
+---
+# One-shot rebuild vehicle: not in the kustomization (apply -f
+# explicitly); delete the CR after Done, re-apply on fresh-DB rebuild.
+{
+  apiVersion: "k8s.keycloak.org/v2beta1",
+  kind: "KeycloakRealmImport",
+  metadata: {
+    name: "prod-platform",
+    namespace: "keycloak",
+  },
+  spec: {
+    keycloakCRName: "keycloak",
+    realm: {
+      id: "39df9177-9652-44c4-8fee-cb97c1463757",
+      realm: "prod-platform",
+      enabled: true,
+    },
+  },
+}

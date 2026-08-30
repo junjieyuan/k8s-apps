@@ -11,6 +11,7 @@ postgres/           PostgreSQL with persistent storage
 monitoring/         Prometheus + Grafana (Kustomize + Helm chart)
 headlamp/           Kubernetes dashboard (Kustomize + Helm chart)
 harbor/             Container registry (Kustomize + Helm chart)
+keycloak-operator/  Keycloak Operator (manages keycloak/, deploy first)
 keycloak/           Identity and access management (Keycloak 26)
 llama-server/       llama.cpp inference server
 comfyui/            ComfyUI image generation (GPU)
@@ -27,7 +28,8 @@ comfyui/            ComfyUI image generation (GPU)
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **harbor** | Container registry (Harbor OSS v2.15.2) | Kustomize (helmCharts) |
-| **keycloak** | Identity and access management (Keycloak 26.7.1) | Deployment, Kustomize |
+| **keycloak-operator** | Keycloak Operator (manages the keycloak app) | Deployment, Kustomize |
+| **keycloak** | Identity and access management (Keycloak 26.7.2) | Keycloak CR (StatefulSet), Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 
 ## Prerequisites
@@ -70,22 +72,39 @@ kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 
 ### Keycloak
 
-Keycloak serves plain HTTP internally — TLS terminates at the shared Gateway.
-The admin console is at `https://keycloak.junjie.pro/admin`. State lives in the
-shared PostgreSQL from `postgres/` (no PVC).
+Keycloak is **operator-managed**: `keycloak-operator/` (Keycloak Operator
+26.7.2) owns the StatefulSet and services created from the `Keycloak` CR in
+`keycloak/`. Keycloak serves plain HTTP internally — TLS terminates at the
+shared Gateway. The admin console is at `https://keycloak.junjie.pro/admin`.
+State lives in the shared PostgreSQL from `postgres/` (no PVC).
 
 ```bash
-# 1. Secret values (gitignored): bootstrap admin + DB role password
+# 1. Secret values (gitignored): DB role + master-realm bootstrap admin
 cp keycloak/.env.example keycloak/.env
-# edit keycloak/.env with real passwords
+cp keycloak/.env-operator-admin.example keycloak/.env-operator-admin
+# edit both with real passwords
 
-# 2. Provision role + database on the shared postgres, then deploy
+# 2. Provision role + database on the shared postgres
 bash keycloak/db-setup.sh
+
+# 3. Operator first, then the app
+kubectl apply -k keycloak-operator/
 kubectl apply -k keycloak/
 
-# 3. Add the hostname to the Cloudflare tunnel ingress
+# 4. One-shot realm import (not part of -k): apply, then delete the
+#    KeycloakRealmImport CR once status.conditions shows Done=True —
+#    the realm persists in the database
+kubectl apply -f keycloak/realms/prod-platform.yaml
+kubectl delete keycloakrealmimport -n keycloak prod-platform
+
+# 5. Add the hostname to the Cloudflare tunnel ingress
 kubectl apply -k cloudflared/
 ```
+
+**Fresh-database rebuild:** on first start the pod bootstraps the
+`keycloak-operator` master-realm user (from `.env-operator-admin`), which
+also lets the operator authenticate; afterwards recreate `platform-admin`
+(the permanent human admin) via kcadm — it is not bootstrapped.
 
 ### Harbor
 
@@ -141,7 +160,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
-                  └─ keycloak.junjie.pro           → keycloak:8080
+                  └─ keycloak.junjie.pro           → keycloak-service:8080
 
   postgres (ClusterIP, no external route) → accessed internally by keycloak
 ```

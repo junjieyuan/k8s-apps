@@ -19,7 +19,7 @@ to verify idempotency.
 
 Each app lives in its own directory. The canonical layout varies by stack:
 - **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
-  keycloak) — described in detail under Shell & tools.
+  keycloak, keycloak-operator) — described in detail under Shell & tools.
   Direct deploy: `kubectl apply -k <app>/`.
 - **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
   under Shell & tools. Deploy: `kubectl kustomize --enable-helm <app>/ |
@@ -210,6 +210,40 @@ unchanged.
   `parentRefs.namespace`. The Gateway's `allowedRoutes.namespaces.from:
   All` enables this without per-app ReferenceGrants.
 
+### Keycloak (Keycloak Operator)
+
+`keycloak/` is plain YAML, but the workload is a `Keycloak` CR
+(`k8s.keycloak.org/v2beta1`) managed by the Keycloak Operator installed by
+`keycloak-operator/` (deploy it first: `kubectl apply -k keycloak-operator/`).
+
+- **Operator-owned resources have no repo manifest** — the operator creates
+  and owns the StatefulSet `keycloak`, Services `keycloak-service`
+  (8080/9000) and `keycloak-discovery` (7800), and the
+  `KeycloakRealmImport` lifecycle. The CR is the manifest of record: change
+  the CR (or the operator app) and let the operator reconcile; never
+  `kubectl edit/patch/delete` operator-owned objects (same exemption as
+  pods — the controller recreates/repairs them).
+- **`keycloak/transformer-config.yaml`** (loaded via `configurations:` in
+  the kustomization — it is a transformer-config file, not a kustomization
+  field) rewrites the CR's `secretGenerator` references —
+  `spec/db/usernameSecret/name`, `spec/db/passwordSecret/name`,
+  `spec/bootstrapAdmin/user/secret` — to the generated hashed secret names.
+  Plain KYAML cannot express this any other way.
+- **Bootstrap / fresh-DB rebuild** — the `keycloak-operator` master-realm
+  user (operator login AND rebuild bootstrap) comes from
+  `.env-operator-admin` (secret `keycloak-operator-admin`; fixed keys
+  `username`/`password`). On a fresh database the Keycloak pod bootstraps
+  that user on first start via KC_BOOTSTRAP_ADMIN_*, which is what lets the
+  operator authenticate. After any fresh-DB rebuild, recreate
+  `platform-admin` (the permanent human admin) via kcadm — it is NOT
+  bootstrapped.
+- **One-shot realm imports** — CRs under `keycloak/realms/` are applied
+  explicitly (`kubectl apply -f`; the namespace is in the file), NOT via
+  `-k`. When `status.conditions` shows `Done=True` and `HasErrors=False`,
+  delete the CR (`kubectl delete keycloakrealmimport -n keycloak <name>`);
+  the realm persists in the database and the file stays in the repo as the
+  rebuild vehicle.
+
 ## Deployment checklist
 
 Before declaring any application "done", verify every item.
@@ -229,7 +263,8 @@ This applies to new apps and upgrades alike.
   (helmCharts apps) must show no output. Known exception: the monitoring
   `admission-create` Job has a TTL, so it always diffs as a create.
 - **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready with RESTARTS=0. `kubectl get httproute -n <ns>`: `status.parents[].conditions` shows `Accepted=True`, `ResolvedRefs=True`.
-- **Cluster sync** — every running resource has a manifest.
+- **Cluster sync** — every running resource has a manifest (exception:
+  operator-owned resources, see Keycloak (Keycloak Operator) above).
 - **Committed** — the change is committed (see Commit conventions); an
   uncommitted app change leaves the repo out of sync with the cluster.
 

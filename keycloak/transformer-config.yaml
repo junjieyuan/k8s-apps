@@ -1,0 +1,22 @@
+---
+# Rewrites the Keycloak CR's secret refs to the generated hashed names
+# (custom-resource paths kustomize cannot auto-rename).
+{
+  nameReference: [{
+    kind: "Secret",
+    version: "v1",
+    fieldSpecs: [{
+      kind: "Keycloak",
+      version: "v2beta1",
+      path: "spec/db/usernameSecret/name",
+    }, {
+      kind: "Keycloak",
+      version: "v2beta1",
+      path: "spec/db/passwordSecret/name",
+    }, {
+      kind: "Keycloak",
+      version: "v2beta1",
+      path: "spec/bootstrapAdmin/user/secret",
+    }],
+  }],
+}

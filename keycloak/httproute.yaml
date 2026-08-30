@@ -15,7 +15,8 @@
     ],
     rules: [{
       backendRefs: [{
-        name: "keycloak",
+        # Operator-managed Service (default name: CR name + "-service").
+        name: "keycloak-service",
         port: 8080,
       }],
     }],

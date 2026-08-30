@@ -1,0 +1,66 @@
+---
+{
+  apiVersion: "k8s.keycloak.org/v2beta1",
+  kind: "Keycloak",
+  metadata: {
+    name: "keycloak",
+  },
+  spec: {
+    # No spec.image: the operator's RELATED_IMAGE_KEYCLOAK (keycloak-operator/)
+    # pins the exact digest the previous Deployment pinned, so this CR changes
+    # no image.
+    http: {
+      httpEnabled: true,
+    },
+    # The shared Gateway handles exposure; no Ingress/NetworkPolicy objects.
+    ingress: {
+      enabled: false,
+    },
+    networkPolicy: {
+      enabled: false,
+    },
+    # Shared PostgreSQL from postgres/; role/database provisioned by
+    # db-setup.sh.
+    db: {
+      vendor: "postgres",
+      url: "jdbc:postgresql://postgres.postgres.svc.cluster.local:5432/keycloak",
+      usernameSecret: {
+        name: "keycloak-credentials",
+        key: "KC_DB_USERNAME",
+      },
+      passwordSecret: {
+        name: "keycloak-credentials",
+        key: "KC_DB_PASSWORD",
+      },
+    },
+    # TLS terminates at the shared Gateway (gateway/), so Keycloak serves
+    # plain HTTP internally and rebuilds the public https:// scheme/host
+    # from the proxy headers.
+    proxy: {
+      headers: "xforwarded",
+    },
+    resources: {
+      requests: {
+        cpu: "250m",
+        memory: "512Mi",
+      },
+      limits: {
+        cpu: "2",
+        memory: "1536Mi",
+      },
+    },
+    # Credentials for the dedicated "keycloak-operator" master-realm admin.
+    # The operator authenticates with them, and they also serve as the
+    # bootstrap admin for cluster rebuilds (fresh DB: created on first
+    # start).
+    bootstrapAdmin: {
+      user: {
+        secret: "keycloak-operator-admin",
+      },
+    },
+    # https scheme explicit: TLS terminates at the shared Gateway.
+    hostname: {
+      hostname: "https://keycloak.junjie.pro",
+    },
+  },
+}

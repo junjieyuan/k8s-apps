@@ -3,21 +3,26 @@
   apiVersion: "kustomize.config.k8s.io/v1beta1",
   kind: "Kustomization",
   namespace: "keycloak",
-  resources: [
-    "namespace.yaml",
-    "deployment.yaml",
-    "service.yaml",
-    "httproute.yaml",
-    "dnsendpoint.yaml",
+  configurations: [
+    "transformer-config.yaml",
   ],
-  images: [{
-    name: "quay.io/keycloak/keycloak",
-    newTag: "26.7.2-1@sha256:831330513f55695572286e521f94fcd3c7e285250ed5b848090265a33192f669",
-  }],
   secretGenerator: [{
     name: "keycloak-credentials",
     envs: [
       ".env",
     ],
+  }, {
+    # Keys are fixed by the Keycloak CR's bootstrapAdmin.user.secret
+    # schema: username, password.
+    name: "keycloak-operator-admin",
+    envs: [
+      ".env-operator-admin",
+    ],
   }],
+  resources: [
+    "namespace.yaml",
+    "keycloak.yaml",
+    "httproute.yaml",
+    "dnsendpoint.yaml",
+  ],
 }

@@ -1,5 +1,6 @@
 # Secrets / credentials
 .env
+.env-operator-admin
 values-secret.yaml
 secret.yaml
 credentials.json

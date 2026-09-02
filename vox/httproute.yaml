@@ -1,0 +1,28 @@
+---
+{
+  apiVersion: "gateway.networking.k8s.io/v1",
+  kind: "HTTPRoute",
+  metadata: {
+    name: "vox",
+  },
+  spec: {
+    parentRefs: [{
+      name: "gateway",
+      namespace: "gateway",
+    }],
+    hostnames: [
+      "vox.junjie.pro",
+    ],
+    rules: [{
+      matches: [{
+        path: {
+          value: "/",
+        },
+      }],
+      backendRefs: [{
+        name: "vox",
+        port: 8000,
+      }],
+    }],
+  },
+}

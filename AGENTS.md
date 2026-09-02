@@ -107,10 +107,11 @@ be changed with one-off commands:
 - **Replica counts live in the manifests.** To scale an app, edit `replicas:`
   in its `deployment.yaml`, commit, then `kubectl apply -k <app>/`. Re-running
   the apply is the idempotency check.
-- **GPU apps are mutually exclusive** — llama-server and comfyui share one
-  RTX 4080 (16GB) and cannot run inference at the same time. Switching the GPU
-  owner means editing `replicas:` in BOTH deployments (1 for the owner, 0 for
-  the other) and applying each app. Never `kubectl scale` to switch.
+- **GPU apps are mutually exclusive** — llama-server, comfyui, and vox
+  share one RTX 4080 (16GB) and cannot run inference at the same time.
+  Switching the GPU owner means editing `replicas:` in the deployments
+  (1 for the owner, 0 for the others) and applying each app. Never
+  `kubectl scale` to switch.
 - **Decommissioning** — to remove an app, run `kubectl delete -k <app>/`
   first (while the manifests are still in the repo), then delete the
   manifests and commit. Plain `kubectl apply -k` never deletes resources that
@@ -182,7 +183,10 @@ unchanged.
   `kubectl diff` after applying.
 - **Not YAML** — `.env*` files are dotenv input for Kustomize
   `secretGenerator`, and `*.json` files (e.g. `credentials.json.example`)
-  stay JSON. Vendored Helm chart sources under gitignored `*/charts/` are
+  stay JSON. App-input data files mounted into pods (e.g.
+  `vox/qwen3_tts.yaml`, the vLLM-Omni deploy config) keep the upstream
+  format and are excluded from KYAML lint via `.yamlfmt`. Vendored Helm
+  chart sources under gitignored `*/charts/` are
   third-party and are not reformatted. Dated plan docs under
   `docs/superpowers/plans/` are historical records; their inline examples
   keep the YAML style from when the plan was written.

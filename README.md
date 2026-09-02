@@ -2,21 +2,6 @@
 
 Kubernetes application workloads deployed on the [k8s-cluster](https://github.com/junjieyuan/k8s-cluster).
 
-## Structure
-
-```
-gateway/            Shared Gateway + wildcard TLS (deploy first)
-cloudflared/        Cloudflare Tunnel client
-postgres/           PostgreSQL with persistent storage
-monitoring/         Prometheus + Grafana (Kustomize + Helm chart)
-headlamp/           Kubernetes dashboard (Kustomize + Helm chart)
-harbor/             Container registry (Kustomize + Helm chart)
-keycloak-operator/  Keycloak Operator (manages keycloak/, deploy first)
-keycloak/           Identity and access management (Keycloak 26)
-llama-server/       llama.cpp inference server
-comfyui/            ComfyUI image generation (GPU)
-```
-
 ## Applications
 
 | App | Description | Stack |
@@ -25,6 +10,7 @@ comfyui/            ComfyUI image generation (GPU)
 | **cloudflared** | Cloudflare Tunnel client for external access | Deployment, Kustomize |
 | **llama-server** | llama.cpp inference server (multi-model router) | GPU (RTX 4080), Kustomize |
 | **comfyui** | ComfyUI image generation (stable diffusion / flux workflows) | GPU (RTX 4080), Kustomize |
+| **vox** | Text-to-speech microservice (vLLM-Omni, OpenAI-compatible API; currently serves Qwen3-TTS) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **harbor** | Container registry (Harbor OSS v2.15.2) | Kustomize (helmCharts) |
@@ -39,8 +25,8 @@ comfyui/            ComfyUI image generation (GPU)
 - cert-manager (from `k8s-cluster`) — required for TLS; optional for HTTP-only
 - `kubectl` configured
 - `helm` — required for apps using the Kustomize `helmCharts` generator (see the Applications table for which)
-- `yamlfmt` (google/yamlfmt) — formats YAML as KYAML (see Conventions)
-- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server, comfyui)
+- `yamlfmt` (google/yamlfmt) — formats YAML as KYAML (see AGENTS.md)
+- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama-server, comfyui, vox)
 
 ## Usage
 
@@ -65,6 +51,7 @@ kubectl apply -k llama-server/
 # comfyui: models are read-only from the shared host HF cache by design; there
 # is no persistent model storage (see comfyui/extra_model_paths.yaml).
 kubectl apply -k comfyui/
+kubectl apply -k vox/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 
@@ -126,26 +113,6 @@ kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 Trivy scanning is disabled to keep the footprint small; to enable it later, set
 `trivy.enabled: true` in `harbor/values.yaml`.
 
-## Conventions
-
-### YAML is KYAML
-
-Every YAML file in this repo is written in **KYAML**, the flow-style YAML
-dialect proposed in
-[KEP 5295](https://www.kubernetes.dev/resources/keps/5295/):
-`---` header, `{}` for maps, `[]` for lists, double-quoted strings, trailing
-commas. KYAML is valid YAML, so the `kubectl apply -k` and
-`kubectl kustomize --enable-helm` workflows are unchanged.
-
-Format with Google's `yamlfmt` (the repo-root `.yamlfmt` config enables the
-kyaml formatter):
-
-```bash
-yamlfmt -dry <file>   # preview without modifying
-yamlfmt <file>        # format in place
-yamlfmt -lint <app>/  # enforce (CI-friendly)
-```
-
 ## Architecture
 
 ```
@@ -157,6 +124,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
               └─ HTTPRoute[host: *.junjie.pro]
                   ├─ llama.junjie.pro              → llama-server:9931
                   ├─ comfyui.junjie.pro            → comfyui:8188
+                  ├─ vox.junjie.pro                → vox:8000
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)

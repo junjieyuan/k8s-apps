@@ -1,0 +1,19 @@
+---
+{
+  apiVersion: "v1",
+  kind: "PersistentVolumeClaim",
+  metadata: {
+    name: "vox-models",
+  },
+  spec: {
+    storageClassName: "local-models",
+    accessModes: [
+      "ReadOnlyMany",
+    ],
+    resources: {
+      requests: {
+        storage: "500Gi",
+      },
+    },
+  },
+}

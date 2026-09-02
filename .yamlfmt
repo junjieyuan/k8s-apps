@@ -6,4 +6,8 @@
   formatter: {
     type: "kyaml",
   },
+  # App-input data files (not K8s manifests) keep the upstream format.
+  exclude: [
+    "vox/qwen3_tts.yaml",
+  ],
 }

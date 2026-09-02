@@ -1,0 +1,25 @@
+---
+{
+  apiVersion: "kustomize.config.k8s.io/v1beta1",
+  kind: "Kustomization",
+  namespace: "vox",
+  resources: [
+    "namespace.yaml",
+    "persistentvolume.yaml",
+    "persistentvolumeclaim.yaml",
+    "deployment.yaml",
+    "service.yaml",
+    "httproute.yaml",
+    "dnsendpoint.yaml",
+  ],
+  images: [{
+    name: "docker.io/vllm/vllm-omni",
+    newTag: "v0.28.0@sha256:6f8be103eaf0055448cf7578cfd621405fd669079d4361bd58896326b2bf722a",
+  }],
+  configMapGenerator: [{
+    name: "deploy-config",
+    files: [
+      "qwen3_tts.yaml",
+    ],
+  }],
+}

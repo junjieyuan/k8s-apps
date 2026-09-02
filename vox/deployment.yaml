@@ -1,0 +1,117 @@
+---
+{
+  apiVersion: "apps/v1",
+  kind: "Deployment",
+  metadata: {
+    name: "vox",
+    labels: {
+      app: "vox",
+    },
+  },
+  spec: {
+    replicas: 0,
+    # Recreate (not rolling): the pod owns the GPU, so a rolling update
+    # would run two instances fighting over it.
+    strategy: {
+      type: "Recreate",
+    },
+    selector: {
+      matchLabels: {
+        app: "vox",
+      },
+    },
+    template: {
+      metadata: {
+        labels: {
+          app: "vox",
+        },
+      },
+      spec: {
+        # GPU-only: the shared HF cache (see persistentvolume.yaml) only
+        # exists on the NVIDIA node, so scheduling must match the volume's
+        # node affinity. seLinuxOptions.type: spc_t makes CRI-O skip
+        # SELinux relabeling of the read-only virtiofs cache (same fix as
+        # llama-server); relabeling would fail with EROFS. No fsGroup:
+        # the image runs as root.
+        securityContext: {
+          seLinuxOptions: {
+            type: "spc_t",
+          },
+        },
+        nodeSelector: {
+          feature.node.kubernetes.io/pci-10de.present: "true",
+        },
+        containers: [{
+          name: "vox",
+          image: "docker.io/vllm/vllm-omni",
+          command: [
+            "vllm",
+          ],
+          args: [
+            "serve",
+            "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+            "--omni",
+            "--port",
+            "8000",
+            "--deploy-config",
+            "/etc/vllm-omni/qwen3_tts.yaml",
+          ],
+          ports: [{
+            containerPort: 8000,
+            name: "http",
+          }],
+          resources: {
+            limits: {
+              nvidia.com/gpu: 1,
+              memory: "32Gi",
+            },
+            requests: {
+              nvidia.com/gpu: 1,
+              memory: "8Gi",
+              cpu: 2,
+            },
+          },
+          env: [{
+            name: "HF_HUB_OFFLINE",
+            value: "1",
+          }],
+          volumeMounts: [{
+            name: "hf-cache",
+            mountPath: "/root/.cache/huggingface/hub",
+            readOnly: true,
+          }, {
+            name: "config",
+            mountPath: "/etc/vllm-omni",
+            readOnly: true,
+          }],
+          livenessProbe: {
+            httpGet: {
+              path: "/health",
+              port: 8000,
+            },
+            initialDelaySeconds: 300,
+            periodSeconds: 30,
+          },
+          readinessProbe: {
+            httpGet: {
+              path: "/health",
+              port: 8000,
+            },
+            initialDelaySeconds: 30,
+          },
+        }],
+        volumes: [{
+          name: "hf-cache",
+          persistentVolumeClaim: {
+            claimName: "vox-models",
+          },
+        }, {
+          name: "config",
+          configMap: {
+            name: "deploy-config",
+          },
+        }],
+      },
+    },
+  },
+}

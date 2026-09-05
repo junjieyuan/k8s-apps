@@ -1,0 +1,24 @@
+---
+{
+  apiVersion: "kustomize.config.k8s.io/v1beta1",
+  kind: "Kustomization",
+  namespace: "hermes",
+  resources: [
+    "namespace.yaml",
+    "persistentvolumeclaim.yaml",
+    "deployment.yaml",
+    "service.yaml",
+    "httproute.yaml",
+    "dnsendpoint.yaml",
+  ],
+  images: [{
+    name: "docker.io/nousresearch/hermes-agent",
+    newTag: "v2026.8.31@sha256:64923faeae267792bf9bf87fe3b4c4869e35004e360c7df01730ad801b74d524",
+  }],
+  secretGenerator: [{
+    name: "hermes-secrets",
+    envs: [
+      ".env",
+    ],
+  }],
+}

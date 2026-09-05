@@ -17,6 +17,7 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **keycloak-operator** | Keycloak Operator (manages the keycloak app) | Deployment, Kustomize |
 | **keycloak** | Identity and access management (Keycloak 26.7.2) | Keycloak CR (StatefulSet), Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
+| **hermes** | Hermes Agent | Deployment, Kustomize |
 
 ## Prerequisites
 
@@ -54,6 +55,7 @@ kubectl apply -k comfyui/
 kubectl apply -k vox/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
+kubectl apply -k hermes/
 
 ```
 
@@ -128,7 +130,8 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
-                  └─ keycloak.junjie.pro           → keycloak-service:8080
+                  ├─ keycloak.junjie.pro           → keycloak-service:8080
+                  └─ hermes.junjie.pro             → hermes:9119
 
   postgres (ClusterIP, no external route) → accessed internally by keycloak
 ```

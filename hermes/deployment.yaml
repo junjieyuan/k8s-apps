@@ -1,0 +1,92 @@
+---
+{
+  apiVersion: "apps/v1",
+  kind: "Deployment",
+  metadata: {
+    name: "hermes",
+  },
+  spec: {
+    # Recreate (not rolling): a rolling-update surge would run two
+    # replicas sharing /opt/data, which is not safe for concurrent
+    # gateway writers (session files, memory stores).
+    strategy: {
+      type: "Recreate",
+    },
+    selector: {
+      matchLabels: {
+        app: "hermes",
+      },
+    },
+    template: {
+      metadata: {
+        labels: {
+          app: "hermes",
+        },
+      },
+      spec: {
+        containers: [{
+          # s6-based image: "gateway" starts the supervised gateway; the
+          # dashboard is supervised alongside when HERMES_DASHBOARD=1.
+          name: "hermes",
+          image: "docker.io/nousresearch/hermes-agent",
+          args: [
+            "gateway",
+          ],
+          env: [{
+            name: "API_SERVER_ENABLED",
+            value: "true",
+          }, {
+            name: "HERMES_DASHBOARD",
+            value: "1",
+          }],
+          envFrom: [{
+            secretRef: {
+              name: "hermes-secrets",
+            },
+          }],
+          ports: [{
+            containerPort: 9119,
+            name: "dashboard",
+          }],
+          resources: {
+            requests: {
+              cpu: "500m",
+              memory: "1Gi",
+            },
+            limits: {
+              cpu: 2,
+              memory: "4Gi",
+            },
+          },
+          # Probes hit the dashboard (9119, 302 on /): the API server
+          # /health (8642) is loopback-only inside the container, and
+          # kubelet httpGet probes run in the node netns, so a loopback
+          # probe address would dial the node, not the container.
+          livenessProbe: {
+            httpGet: {
+              port: 9119,
+            },
+            initialDelaySeconds: 60,
+            periodSeconds: 30,
+          },
+          readinessProbe: {
+            httpGet: {
+              port: 9119,
+            },
+            initialDelaySeconds: 20,
+          },
+          volumeMounts: [{
+            name: "data",
+            mountPath: "/opt/data",
+          }],
+        }],
+        volumes: [{
+          name: "data",
+          persistentVolumeClaim: {
+            claimName: "hermes-data",
+          },
+        }],
+      },
+    },
+  },
+}

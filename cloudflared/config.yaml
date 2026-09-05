@@ -63,6 +63,14 @@
       originServerName: "vox.junjie.pro",
     },
     {
+      hostname: "hermes.junjie.pro",
+      service: "https://cilium-gateway-gateway.gateway:443",
+      originRequest: {
+        noTLSVerify: true,
+      },
+      originServerName: "hermes.junjie.pro",
+    },
+    {
       service: "http_status:404",
     },
   ],

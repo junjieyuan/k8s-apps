@@ -18,7 +18,7 @@
   ],
   images: [{
     name: "ghcr.io/ggml-org/llama.cpp",
-    newTag: "server-cuda13-b10795@sha256:873a4e2f20385c10c6e5ea7476c07ff3885fa0f87939a4b8e13259f8c5ba3f08",
+    newTag: "server-cuda13-b10853@sha256:26484310f69a2d0b8cf610c0a8cb69f5c70193cbb86e685fd6a5b71ca4313933",
   }],
   configMapGenerator: [{
     name: "models-config",

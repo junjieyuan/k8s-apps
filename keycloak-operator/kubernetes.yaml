@@ -6,11 +6,11 @@
     annotations: {
       app.quarkus.io/quarkus-version: "3.33.3.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-27 - 16:06:38 +0000",
+      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
     },
     name: "keycloak-operator",
@@ -45,7 +45,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloaksamlclientcontroller-cluster-role",
   },
@@ -76,7 +76,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakrealmimportcontroller-cluster-role",
   },
@@ -138,7 +138,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakcontroller-cluster-role",
   },
@@ -295,7 +295,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakoidcclientcontroller-cluster-role",
   },
@@ -347,7 +347,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloaksamlclientcontroller-role-binding",
   },
@@ -369,7 +369,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakrealmimportcontroller-role-binding",
   },
@@ -391,7 +391,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakcontroller-role-binding",
   },
@@ -413,7 +413,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloakoidcclientcontroller-role-binding",
   },
@@ -435,7 +435,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
     },
     name: "keycloak-operator-view",
   },
@@ -458,11 +458,11 @@
     annotations: {
       app.quarkus.io/quarkus-version: "3.33.3.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-27 - 16:06:38 +0000",
+      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
     },
     name: "keycloak-operator",
@@ -488,11 +488,11 @@
     annotations: {
       app.quarkus.io/quarkus-version: "3.33.3.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-27 - 16:06:38 +0000",
+      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.2",
+      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
     },
     name: "keycloak-operator",
@@ -508,12 +508,12 @@
         annotations: {
           app.quarkus.io/quarkus-version: "3.33.3.1",
           app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-          app.quarkus.io/build-timestamp: "2026-08-27 - 16:06:38 +0000",
+          app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
         },
         labels: {
           app.kubernetes.io/managed-by: "quarkus",
           app.kubernetes.io/name: "keycloak-operator",
-          app.kubernetes.io/version: "26.7.2",
+          app.kubernetes.io/version: "26.7.3",
         },
       },
       spec: {
@@ -527,7 +527,7 @@
             },
           }, {
             name: "RELATED_IMAGE_KEYCLOAK",
-            value: "quay.io/keycloak/keycloak:26.7.2-2@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067",
+            value: "quay.io/keycloak/keycloak:26.7.3-0@sha256:ff4257d0d64efbe99ed1ddfaf07765cc3c36dc7518bf8324d41961327f441c54",
           }, {
             name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKSAMLCLIENTCONTROLLER_NAMESPACES",
             value: "JOSDK_WATCH_CURRENT",
@@ -541,7 +541,7 @@
             name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKOIDCCLIENTCONTROLLER_NAMESPACES",
             value: "JOSDK_WATCH_CURRENT",
           }],
-          image: "quay.io/keycloak/keycloak-operator:26.7.2@sha256:f6079999aa773f1846de01c9014d19c3c677d35570361fd7c01c0830836e4041",
+          image: "quay.io/keycloak/keycloak-operator:26.7.3-0@sha256:e3856fd1aeb404f0e6ae2180b01875c8eeebd3748b0e5d955da77b5d41095ae4",
           imagePullPolicy: "Always",
           livenessProbe: {
             failureThreshold: 3,

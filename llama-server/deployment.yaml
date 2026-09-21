@@ -63,6 +63,9 @@
             name: "LLAMA_ARG_FIT_TARGET",
             value: "128",
           }, {
+            name: "LLAMA_ARG_LOG_VERBOSITY",
+            value: "4",
+          }, {
             name: "LLAMA_ARG_MODELS_MAX",
             value: "1",
           }, {

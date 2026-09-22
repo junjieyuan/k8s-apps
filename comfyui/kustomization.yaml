@@ -17,7 +17,7 @@
   ],
   images: [{
     name: "docker.io/yanwk/comfyui-boot",
-    newTag: "cu130-slim-v2-20260910@sha256:2e4709816611384a4b01cc4d74ccf992eb4334f86618d882f3d34a25bcd42e49",
+    newTag: "cu130-slim-v2-20260921@sha256:e3af100b48651a9d5e6e16680efbaa8f01de8e16caa6600292391abb5b64af32",
   }],
   configMapGenerator: [{
     name: "comfyui-config",

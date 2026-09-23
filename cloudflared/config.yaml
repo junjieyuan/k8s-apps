@@ -71,12 +71,12 @@
       originServerName: "hermes.junjie.pro",
     },
     {
-      hostname: "hermes-api.junjie.pro",
+      hostname: "hermes-webhook.junjie.pro",
       service: "https://cilium-gateway-gateway.gateway:443",
       originRequest: {
         noTLSVerify: true,
       },
-      originServerName: "hermes-api.junjie.pro",
+      originServerName: "hermes-webhook.junjie.pro",
     },
     {
       service: "http_status:404",

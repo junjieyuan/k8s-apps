@@ -36,8 +36,9 @@
             name: "API_SERVER_ENABLED",
             value: "true",
           }, {
-            # Bind beyond container loopback so the in-cluster Service can
-            # reach the API server (it defaults to 127.0.0.1).
+            # API server (8642) is unexposed on purpose (no Service
+            # port, no route), but keep 0.0.0.0 instead of the
+            # 127.0.0.1 default for future in-cluster callers.
             name: "API_SERVER_HOST",
             value: "0.0.0.0",
           }, {
@@ -53,8 +54,8 @@
             containerPort: 9119,
             name: "dashboard",
           }, {
-            containerPort: 8642,
-            name: "api",
+            containerPort: 8644,
+            name: "webhook",
           }],
           resources: {
             requests: {
@@ -66,14 +67,14 @@
               memory: "4Gi",
             },
           },
-          # Probes hit the API server (8642) /health, not the dashboard
-          # (9119): that is the gateway process (the core workload), and
-          # /health answers 200 without a key (kubelet can't send a
-          # Bearer; /health/detailed wants API_SERVER_KEY).
+          # Probes hit the webhook adapter (8644) /health rather than
+          # the dashboard (9119) or the API server (8642): the webhook
+          # is served by the supervised gateway process and answers 200
+          # without a key, so kubelet needs no Bearer.
           livenessProbe: {
             httpGet: {
               path: "/health",
-              port: 8642,
+              port: 8644,
             },
             initialDelaySeconds: 60,
             periodSeconds: 30,
@@ -81,7 +82,7 @@
           readinessProbe: {
             httpGet: {
               path: "/health",
-              port: 8642,
+              port: 8644,
             },
             initialDelaySeconds: 20,
           },

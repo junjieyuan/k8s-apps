@@ -26,25 +26,24 @@
   apiVersion: "gateway.networking.k8s.io/v1",
   kind: "HTTPRoute",
   metadata: {
-    name: "hermes-api",
+    name: "hermes-webhook",
   },
   spec: {
-    # OpenAI-compatible API server (8642); the dashboard's catch-all
-    # redirects unknown paths to its login page, so the API needs its own
-    # hostname. The installed Gateway API CRD predates rule-level
-    # hostnames, so a second HTTPRoute is required instead of one rule
-    # per hostname.
+    # Webhook adapter (8644); the dashboard's catch-all redirects unknown
+    # paths to its login page, so the webhook needs its own hostname. The
+    # installed Gateway API CRD predates rule-level hostnames, so a second
+    # HTTPRoute is required instead of one rule per hostname.
     parentRefs: [{
       name: "gateway",
       namespace: "gateway",
     }],
     hostnames: [
-      "hermes-api.junjie.pro",
+      "hermes-webhook.junjie.pro",
     ],
     rules: [{
       backendRefs: [{
         name: "hermes",
-        port: 8642,
+        port: 8644,
       }],
     }],
   },

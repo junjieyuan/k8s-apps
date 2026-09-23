@@ -17,7 +17,7 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **keycloak-operator** | Keycloak Operator (manages the keycloak app) | Deployment, Kustomize |
 | **keycloak** | Identity and access management (Keycloak 26.7.2) | Keycloak CR (StatefulSet), Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
-| **hermes** | Hermes Agent (dashboard + OpenAI-compatible API server) | Deployment, Kustomize |
+| **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
 
 ## Prerequisites
 
@@ -132,7 +132,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
                   ├─ keycloak.junjie.pro           → keycloak-service:8080
                   ├─ hermes.junjie.pro             → hermes:9119 (dashboard)
-                  └─ hermes-api.junjie.pro         → hermes:8642 (OpenAI API)
+                  └─ hermes-webhook.junjie.pro     → hermes:8644 (webhook)
 
   postgres (ClusterIP, no external route) → accessed internally by keycloak
 ```

@@ -16,8 +16,8 @@
       port: 9119,
       name: "dashboard",
     }, {
-      port: 8642,
-      name: "api",
+      port: 8644,
+      name: "webhook",
     }],
   },
 }

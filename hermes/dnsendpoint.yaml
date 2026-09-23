@@ -15,3 +15,20 @@
     }],
   },
 }
+---
+{
+  apiVersion: "externaldns.k8s.io/v1alpha1",
+  kind: "DNSEndpoint",
+  metadata: {
+    name: "hermes-api",
+  },
+  spec: {
+    endpoints: [{
+      dnsName: "hermes-api.junjie.pro",
+      recordType: "CNAME",
+      targets: [
+        "e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com",
+      ],
+    }],
+  },
+}

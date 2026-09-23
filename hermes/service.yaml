@@ -15,6 +15,9 @@
     ports: [{
       port: 9119,
       name: "dashboard",
+    }, {
+      port: 8642,
+      name: "api",
     }],
   },
 }

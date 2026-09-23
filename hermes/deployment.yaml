@@ -36,6 +36,11 @@
             name: "API_SERVER_ENABLED",
             value: "true",
           }, {
+            # Bind beyond container loopback so the in-cluster Service can
+            # reach the API server (it defaults to 127.0.0.1).
+            name: "API_SERVER_HOST",
+            value: "0.0.0.0",
+          }, {
             name: "HERMES_DASHBOARD",
             value: "1",
           }],
@@ -47,6 +52,9 @@
           ports: [{
             containerPort: 9119,
             name: "dashboard",
+          }, {
+            containerPort: 8642,
+            name: "api",
           }],
           resources: {
             requests: {
@@ -58,20 +66,22 @@
               memory: "4Gi",
             },
           },
-          # Probes hit the dashboard (9119, 302 on /): the API server
-          # /health (8642) is loopback-only inside the container, and
-          # kubelet httpGet probes run in the node netns, so a loopback
-          # probe address would dial the node, not the container.
+          # Probes hit the API server (8642) /health, not the dashboard
+          # (9119): that is the gateway process (the core workload), and
+          # /health answers 200 without a key (kubelet can't send a
+          # Bearer; /health/detailed wants API_SERVER_KEY).
           livenessProbe: {
             httpGet: {
-              port: 9119,
+              path: "/health",
+              port: 8642,
             },
             initialDelaySeconds: 60,
             periodSeconds: 30,
           },
           readinessProbe: {
             httpGet: {
-              port: 9119,
+              path: "/health",
+              port: 8642,
             },
             initialDelaySeconds: 20,
           },

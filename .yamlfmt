@@ -10,4 +10,7 @@
   exclude: [
     "vox/qwen3_tts.yaml",
   ],
+  # Vendored chart sources under gitignored charts/ are third-party; without
+  # this, `yamlfmt -lint .` fails decoding their Go templates.
+  gitignore_excludes: true,
 }

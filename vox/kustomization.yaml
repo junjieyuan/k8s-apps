@@ -14,7 +14,7 @@
   ],
   images: [{
     name: "docker.io/vllm/vllm-omni",
-    newTag: "v0.28.0@sha256:6f8be103eaf0055448cf7578cfd621405fd669079d4361bd58896326b2bf722a",
+    newTag: "v0.30.0@sha256:fc77cfaac7b1b43c30cbf32eaea214864434c6e0f303e6e9eb9f64104241a994",
   }],
   configMapGenerator: [{
     name: "deploy-config",

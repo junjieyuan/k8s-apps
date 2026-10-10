@@ -265,7 +265,8 @@ This applies to new apps and upgrades alike.
   deployment/httproute even when nothing changed): `kubectl diff -k <app>/`
   (plain apps) or `kubectl kustomize --enable-helm <app>/ | kubectl diff -f -`
   (helmCharts apps) must show no output. Known exception: the monitoring
-  `admission-create` Job has a TTL, so it always diffs as a create.
+  admission hook Jobs (`admission-create`, `admission-patch`) have a TTL,
+  so they always diff as creates.
 - **Post-deploy** — `kubectl logs -n <ns> deployment/<name>` shows no E/F errors; CrashLoopBackOff investigated. `kubectl get pods -n <ns>` shows Running+Ready with RESTARTS=0. `kubectl get httproute -n <ns>`: `status.parents[].conditions` shows `Accepted=True`, `ResolvedRefs=True`.
 - **Cluster sync** — every running resource has a manifest (exception:
   operator-owned resources, see Keycloak (Keycloak Operator) above).

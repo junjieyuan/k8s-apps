@@ -4,16 +4,18 @@
   kind: "ServiceAccount",
   metadata: {
     annotations: {
-      app.quarkus.io/quarkus-version: "3.33.3.1",
+      app.quarkus.io/build-timestamp: "2026-10-01 - 06:02:53 +0000",
+      app.quarkus.io/commit-id: "4246609cf2024c85016d3fb1254c3d2533367c31",
+      app.quarkus.io/quarkus-version: "3.40.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloak-operator",
+    namespace: "keycloak",
   },
 }
 ---
@@ -45,100 +47,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
-    },
-    name: "keycloaksamlclientcontroller-cluster-role",
-  },
-  rules: [{
-    apiGroups: [
-      "k8s.keycloak.org",
-    ],
-    resources: [
-      "keycloaksamlclients",
-      "keycloaksamlclients/status",
-      "keycloaksamlclients/finalizers",
-    ],
-    verbs: [
-      "get",
-      "list",
-      "watch",
-      "patch",
-      "update",
-      "create",
-      "delete",
-    ],
-  }],
-}
----
-{
-  apiVersion: "rbac.authorization.k8s.io/v1",
-  kind: "ClusterRole",
-  metadata: {
-    labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
-    },
-    name: "keycloakrealmimportcontroller-cluster-role",
-  },
-  rules: [{
-    apiGroups: [
-      "k8s.keycloak.org",
-    ],
-    resources: [
-      "keycloakrealmimports",
-      "keycloakrealmimports/status",
-      "keycloakrealmimports/finalizers",
-    ],
-    verbs: [
-      "get",
-      "list",
-      "watch",
-      "patch",
-      "update",
-      "create",
-      "delete",
-    ],
-  }, {
-    apiGroups: [
-      "batch",
-    ],
-    resources: [
-      "jobs",
-    ],
-    verbs: [
-      "create",
-      "delete",
-      "get",
-      "list",
-      "patch",
-      "watch",
-    ],
-  }, {
-    apiGroups: [
-      "",
-    ],
-    resources: [
-      "secrets",
-    ],
-    verbs: [
-      "create",
-      "delete",
-      "get",
-      "list",
-      "patch",
-      "update",
-      "watch",
-    ],
-  }],
-}
----
-{
-  apiVersion: "rbac.authorization.k8s.io/v1",
-  kind: "ClusterRole",
-  metadata: {
-    labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloakcontroller-cluster-role",
   },
@@ -295,7 +204,7 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloakoidcclientcontroller-cluster-role",
   },
@@ -322,62 +231,113 @@
 ---
 {
   apiVersion: "rbac.authorization.k8s.io/v1",
-  kind: "ClusterRoleBinding",
+  kind: "ClusterRole",
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
     },
-    name: "keycloak-operator-clusterrole-binding",
-  },
-  roleRef: {
-    kind: "ClusterRole",
-    apiGroup: "rbac.authorization.k8s.io",
-    name: "keycloak-operator-clusterrole",
-  },
-  subjects: [{
-    kind: "ServiceAccount",
-    name: "keycloak-operator",
-    namespace: "keycloak",
-  }],
-}
----
-{
-  apiVersion: "rbac.authorization.k8s.io/v1",
-  kind: "RoleBinding",
-  metadata: {
-    labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
-    },
-    name: "keycloaksamlclientcontroller-role-binding",
-  },
-  roleRef: {
-    kind: "ClusterRole",
-    apiGroup: "rbac.authorization.k8s.io",
-    name: "keycloaksamlclientcontroller-cluster-role",
-  },
-  subjects: [{
-    kind: "ServiceAccount",
-    name: "keycloak-operator",
-    namespace: "keycloak",
-  }],
-}
----
-{
-  apiVersion: "rbac.authorization.k8s.io/v1",
-  kind: "RoleBinding",
-  metadata: {
-    labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
-    },
-    name: "keycloakrealmimportcontroller-role-binding",
-  },
-  roleRef: {
-    kind: "ClusterRole",
-    apiGroup: "rbac.authorization.k8s.io",
     name: "keycloakrealmimportcontroller-cluster-role",
   },
+  rules: [{
+    apiGroups: [
+      "k8s.keycloak.org",
+    ],
+    resources: [
+      "keycloakrealmimports",
+      "keycloakrealmimports/status",
+      "keycloakrealmimports/finalizers",
+    ],
+    verbs: [
+      "get",
+      "list",
+      "watch",
+      "patch",
+      "update",
+      "create",
+      "delete",
+    ],
+  }, {
+    apiGroups: [
+      "batch",
+    ],
+    resources: [
+      "jobs",
+    ],
+    verbs: [
+      "create",
+      "delete",
+      "get",
+      "list",
+      "patch",
+      "watch",
+    ],
+  }, {
+    apiGroups: [
+      "",
+    ],
+    resources: [
+      "secrets",
+    ],
+    verbs: [
+      "create",
+      "delete",
+      "get",
+      "list",
+      "patch",
+      "update",
+      "watch",
+    ],
+  }],
+}
+---
+{
+  apiVersion: "rbac.authorization.k8s.io/v1",
+  kind: "ClusterRole",
+  metadata: {
+    labels: {
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
+    },
+    name: "keycloaksamlclientcontroller-cluster-role",
+  },
+  rules: [{
+    apiGroups: [
+      "k8s.keycloak.org",
+    ],
+    resources: [
+      "keycloaksamlclients",
+      "keycloaksamlclients/status",
+      "keycloaksamlclients/finalizers",
+    ],
+    verbs: [
+      "get",
+      "list",
+      "watch",
+      "patch",
+      "update",
+      "create",
+      "delete",
+    ],
+  }],
+}
+---
+{
+  apiVersion: "rbac.authorization.k8s.io/v1",
+  kind: "RoleBinding",
+  metadata: {
+    labels: {
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
+    },
+    name: "keycloak-operator-view",
+    namespace: "keycloak",
+  },
+  roleRef: {
+    apiGroup: "rbac.authorization.k8s.io",
+    kind: "ClusterRole",
+    name: "view",
+  },
   subjects: [{
     kind: "ServiceAccount",
     name: "keycloak-operator",
@@ -391,13 +351,14 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloakcontroller-role-binding",
+    namespace: "keycloak",
   },
   roleRef: {
-    kind: "ClusterRole",
     apiGroup: "rbac.authorization.k8s.io",
+    kind: "ClusterRole",
     name: "keycloakcontroller-cluster-role",
   },
   subjects: [{
@@ -413,13 +374,14 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloakoidcclientcontroller-role-binding",
+    namespace: "keycloak",
   },
   roleRef: {
-    kind: "ClusterRole",
     apiGroup: "rbac.authorization.k8s.io",
+    kind: "ClusterRole",
     name: "keycloakoidcclientcontroller-cluster-role",
   },
   subjects: [{
@@ -435,14 +397,59 @@
   metadata: {
     labels: {
       app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
+      app.kubernetes.io/version: "26.8.0",
     },
-    name: "keycloak-operator-view",
+    name: "keycloakrealmimportcontroller-role-binding",
+    namespace: "keycloak",
   },
   roleRef: {
-    kind: "ClusterRole",
     apiGroup: "rbac.authorization.k8s.io",
-    name: "view",
+    kind: "ClusterRole",
+    name: "keycloakrealmimportcontroller-cluster-role",
+  },
+  subjects: [{
+    kind: "ServiceAccount",
+    name: "keycloak-operator",
+    namespace: "keycloak",
+  }],
+}
+---
+{
+  apiVersion: "rbac.authorization.k8s.io/v1",
+  kind: "RoleBinding",
+  metadata: {
+    labels: {
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
+    },
+    name: "keycloaksamlclientcontroller-role-binding",
+    namespace: "keycloak",
+  },
+  roleRef: {
+    apiGroup: "rbac.authorization.k8s.io",
+    kind: "ClusterRole",
+    name: "keycloaksamlclientcontroller-cluster-role",
+  },
+  subjects: [{
+    kind: "ServiceAccount",
+    name: "keycloak-operator",
+    namespace: "keycloak",
+  }],
+}
+---
+{
+  apiVersion: "rbac.authorization.k8s.io/v1",
+  kind: "ClusterRoleBinding",
+  metadata: {
+    labels: {
+      app.kubernetes.io/name: "keycloak-operator",
+    },
+    name: "keycloak-operator-clusterrole-binding",
+  },
+  roleRef: {
+    apiGroup: "rbac.authorization.k8s.io",
+    kind: "ClusterRole",
+    name: "keycloak-operator-clusterrole",
   },
   subjects: [{
     kind: "ServiceAccount",
@@ -456,16 +463,18 @@
   kind: "Service",
   metadata: {
     annotations: {
-      app.quarkus.io/quarkus-version: "3.33.3.1",
+      app.quarkus.io/build-timestamp: "2026-10-01 - 06:02:53 +0000",
+      app.quarkus.io/commit-id: "4246609cf2024c85016d3fb1254c3d2533367c31",
+      app.quarkus.io/quarkus-version: "3.40.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloak-operator",
+    namespace: "keycloak",
   },
   spec: {
     ports: [{
@@ -486,16 +495,18 @@
   kind: "Deployment",
   metadata: {
     annotations: {
-      app.quarkus.io/quarkus-version: "3.33.3.1",
+      app.quarkus.io/build-timestamp: "2026-10-01 - 06:02:53 +0000",
+      app.quarkus.io/commit-id: "4246609cf2024c85016d3fb1254c3d2533367c31",
+      app.quarkus.io/quarkus-version: "3.40.1",
       app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-      app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
     },
     labels: {
-      app.kubernetes.io/name: "keycloak-operator",
-      app.kubernetes.io/version: "26.7.3",
       app.kubernetes.io/managed-by: "quarkus",
+      app.kubernetes.io/name: "keycloak-operator",
+      app.kubernetes.io/version: "26.8.0",
     },
     name: "keycloak-operator",
+    namespace: "keycloak",
   },
   spec: {
     selector: {
@@ -506,14 +517,15 @@
     template: {
       metadata: {
         annotations: {
-          app.quarkus.io/quarkus-version: "3.33.3.1",
+          app.quarkus.io/build-timestamp: "2026-10-01 - 06:02:53 +0000",
+          app.quarkus.io/commit-id: "4246609cf2024c85016d3fb1254c3d2533367c31",
+          app.quarkus.io/quarkus-version: "3.40.1",
           app.quarkus.io/vcs-uri: "https://github.com/keycloak/keycloak.git",
-          app.quarkus.io/build-timestamp: "2026-08-31 - 09:35:27 +0000",
         },
         labels: {
           app.kubernetes.io/managed-by: "quarkus",
           app.kubernetes.io/name: "keycloak-operator",
-          app.kubernetes.io/version: "26.7.3",
+          app.kubernetes.io/version: "26.8.0",
         },
       },
       spec: {
@@ -526,13 +538,16 @@
               },
             },
           }, {
-            name: "RELATED_IMAGE_KEYCLOAK",
-            value: "quay.io/keycloak/keycloak:26.7.3-0@sha256:ff4257d0d64efbe99ed1ddfaf07765cc3c36dc7518bf8324d41961327f441c54",
+            name: "kc.operator.keycloak.image",
+            value: "quay.io/keycloak/keycloak:26.8.0@sha256:b0f60d489d51c5d113390bdf5461d4c06e6051be026c05549f2e1e10ec352bcc",
           }, {
-            name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKSAMLCLIENTCONTROLLER_NAMESPACES",
-            value: "JOSDK_WATCH_CURRENT",
+            name: "RELATED_IMAGE_KEYCLOAK",
+            value: "quay.io/keycloak/keycloak:26.8.0@sha256:b0f60d489d51c5d113390bdf5461d4c06e6051be026c05549f2e1e10ec352bcc",
           }, {
             name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKREALMIMPORTCONTROLLER_NAMESPACES",
+            value: "JOSDK_WATCH_CURRENT",
+          }, {
+            name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKSAMLCLIENTCONTROLLER_NAMESPACES",
             value: "JOSDK_WATCH_CURRENT",
           }, {
             name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKCONTROLLER_NAMESPACES",
@@ -541,7 +556,7 @@
             name: "QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKOIDCCLIENTCONTROLLER_NAMESPACES",
             value: "JOSDK_WATCH_CURRENT",
           }],
-          image: "quay.io/keycloak/keycloak-operator:26.7.3-0@sha256:e3856fd1aeb404f0e6ae2180b01875c8eeebd3748b0e5d955da77b5d41095ae4",
+          image: "quay.io/keycloak/keycloak-operator:26.8.0-0@sha256:3e7c09e685865f45c753aedb5eef8bed9f5f0af37b76ef568ae920bae6d4f2d5",
           imagePullPolicy: "Always",
           livenessProbe: {
             failureThreshold: 3,
@@ -597,6 +612,7 @@
           },
         }],
         serviceAccountName: "keycloak-operator",
+        terminationGracePeriodSeconds: 10,
       },
     },
   },

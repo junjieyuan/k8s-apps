@@ -7,6 +7,12 @@
       enabled: true,
       size: "2Gi",
     },
+    # The subchart's bats test framework renders a test Pod; the kustomize
+    # helmCharts flow does not process Helm hooks, so it would linger in the
+    # cluster as an orphan completed Pod.
+    testFramework: {
+      enabled: false,
+    },
   },
   # Disable Alertmanager — not needed for this cluster's monitoring scope.
   alertmanager: {

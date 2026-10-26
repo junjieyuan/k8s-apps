@@ -39,6 +39,12 @@
         securityContext: {
           seLinuxOptions: {
             type: "spc_t",
+            # This volume is mounted at several subPaths, and kubelet computes a
+            # file label per volumeMount: without an explicit level each mount gets
+            # a random MCS pair, so kubelet refuses the volume with "multiple
+            # SELinux labels found". spc_t is unconfined, so the categories
+            # impose no restriction.
+            level: "s0:c300,c301",
           },
         },
         nodeSelector: {

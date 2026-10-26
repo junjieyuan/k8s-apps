@@ -18,19 +18,6 @@
 # models/ is deliberately read-only and ephemeral in the deployment: zero model
 # storage by design, so this config is the only model source.
 {
-  z_image: {
-    base_path: "/hf-cache/models--Comfy-Org--z_image/snapshots/793c2712165203d1ddf07e550a66fc3562c2fbb8/split_files",
-    diffusion_models: "diffusion_models",
-    text_encoders: "text_encoders",
-    vae: "vae",
-  },
-  z_image_turbo: {
-    base_path: "/hf-cache/models--Comfy-Org--z_image_turbo/snapshots/2f862278568d3f0a83167a16e5f11094da6dee72/split_files",
-    diffusion_models: "diffusion_models",
-    text_encoders: "text_encoders",
-    vae: "vae",
-    loras: "loras",
-  },
   minimax_h3: {
     base_path: "/hf-cache/models--Comfy-Org--MiniMax-H3/snapshots/dc559027db79c174125df4d827db55cd11178860",
     diffusion_models: "diffusion_models",

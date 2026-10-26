@@ -6,8 +6,8 @@
 #
 # Comfy-Org publishes ComfyUI-native split files whose subdirs are exactly the
 # ComfyUI categories, so each repo maps 1:1 onto diffusion_models/text_encoders/
-# vae/loras. Most repos keep those under a split_files/ subdir; MiniMax-H3
-# keeps them at the snapshot root, so its base_path is the snapshot itself.
+# vae/loras. The split files live either at the snapshot root or under a
+# split_files/ subdir; base_path points at the dir that holds them.
 # All paths are inside the pod; /hf-cache is the GPU node's read-only virtiofs
 # HF hub cache shared with llama-server (no model data hits NFS).
 #
@@ -20,6 +20,12 @@
 {
   minimax_h3: {
     base_path: "/hf-cache/models--Comfy-Org--MiniMax-H3/snapshots/dc559027db79c174125df4d827db55cd11178860",
+    diffusion_models: "diffusion_models",
+    text_encoders: "text_encoders",
+    vae: "vae",
+  },
+  qwen_image_2_1: {
+    base_path: "/hf-cache/models--Comfy-Org--Qwen-Image-2.1/snapshots/0217efd1d9c9452e84f6448903d6e21bfa171ffd",
     diffusion_models: "diffusion_models",
     text_encoders: "text_encoders",
     vae: "vae",

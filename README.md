@@ -14,8 +14,7 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **harbor** | Container registry (Harbor OSS) | Kustomize (helmCharts) |
-| **keycloak-operator** | Keycloak Operator (manages the keycloak app) | Deployment, Kustomize |
-| **keycloak** | Identity and access management (Keycloak) | Keycloak CR (StatefulSet), Kustomize |
+| **keycloak** | Identity and access management (Keycloak + Operator) | Keycloak CR + Operator, Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 | **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
 
@@ -61,11 +60,12 @@ kubectl apply -k hermes/
 
 ### Keycloak
 
-Keycloak is **operator-managed**: `keycloak-operator/` (Keycloak Operator)
-owns the StatefulSet and services created from the `Keycloak` CR in
-`keycloak/`. Keycloak serves plain HTTP internally — TLS terminates at the
-shared Gateway. The admin console is at `https://keycloak.junjie.pro/admin`.
-State lives in the shared PostgreSQL from `postgres/` (no PVC).
+Keycloak is **operator-managed**: `keycloak/operator/` runs the Keycloak
+Operator, which owns the StatefulSet and services created from the `Keycloak`
+CR in `keycloak/`. Keycloak serves plain HTTP internally — TLS terminates at
+the shared Gateway. The admin console is at
+`https://keycloak.junjie.pro/admin`. State lives in the shared PostgreSQL from
+`postgres/` (no PVC).
 
 ```bash
 # 1. Secret values (gitignored): DB role + master-realm bootstrap admin
@@ -77,7 +77,7 @@ cp keycloak/.env-operator-admin.example keycloak/.env-operator-admin
 bash keycloak/db-setup.sh
 
 # 3. Operator first, then the app
-kubectl apply -k keycloak-operator/
+kubectl apply -k keycloak/operator/
 kubectl apply -k keycloak/
 
 # 4. One-shot realm import (not part of -k): apply, then delete the

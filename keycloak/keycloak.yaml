@@ -6,9 +6,9 @@
     name: "keycloak",
   },
   spec: {
-    # No spec.image: the operator's RELATED_IMAGE_KEYCLOAK (keycloak-operator/)
-    # pins the exact digest the previous Deployment pinned, so this CR changes
-    # no image.
+    # No spec.image: the operator's RELATED_IMAGE_KEYCLOAK
+    # (keycloak/operator/) pins the server tag + digest, so this CR carries
+    # no image reference that could drift from the operator.
     http: {
       httpEnabled: true,
     },

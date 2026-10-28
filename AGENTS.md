@@ -19,8 +19,8 @@ to verify idempotency.
 
 Each app lives in its own directory. The canonical layout varies by stack:
 - **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
-  keycloak, keycloak-operator) — described in detail under Shell & tools.
-  Direct deploy: `kubectl apply -k <app>/`.
+  keycloak) — described in detail under Shell & tools. Direct deploy:
+  `kubectl apply -k <app>/` (keycloak: apply `keycloak/operator/` first).
 - **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
   under Shell & tools. Deploy: `kubectl kustomize --enable-helm <app>/ |
   kubectl apply -f -`.
@@ -114,7 +114,9 @@ be changed with one-off commands:
   `kubectl scale` to switch.
 - **Decommissioning** — to remove an app, run `kubectl delete -k <app>/`
   first (while the manifests are still in the repo), then delete the
-  manifests and commit. Plain `kubectl apply -k` never deletes resources that
+  manifests and commit. keycloak has a second kustomization: also run
+  `kubectl delete -k keycloak/operator/` so the operator, CRDs, and
+  namespace go away. Plain `kubectl apply -k` never deletes resources that
   disappear from manifests. Never `kubectl delete` PVCs/PVs ad-hoc — that is
   data loss, not drift.
 - **No ad-hoc test resources** — throwaway namespaces/pods/objects outside the
@@ -217,14 +219,19 @@ unchanged.
 ### Keycloak (Keycloak Operator)
 
 `keycloak/` is plain YAML, but the workload is a `Keycloak` CR
-(`k8s.keycloak.org/v2beta1`) managed by the Keycloak Operator installed by
-`keycloak-operator/` (deploy it first: `kubectl apply -k keycloak-operator/`).
+(`k8s.keycloak.org/v2beta1`) managed by the Keycloak Operator, whose vendored
+manifests live in `keycloak/operator/` (deploy it first:
+`kubectl apply -k keycloak/operator/`).
 
+- **Two kustomizations** — `keycloak/operator/` (operator, CRDs, image
+  pins) is applied before `keycloak/` and diffed separately:
+  `kubectl diff -k keycloak/operator/` and `kubectl diff -k keycloak/`.
 - **Operator-owned resources have no repo manifest** — the operator creates
   and owns the StatefulSet `keycloak`, Services `keycloak-service`
   (8080/9000) and `keycloak-discovery` (7800), and the
   `KeycloakRealmImport` lifecycle. The CR is the manifest of record: change
-  the CR (or the operator app) and let the operator reconcile; never
+  the CR (or the vendored operator manifests in `keycloak/operator/`) and
+  let the operator reconcile; never
   `kubectl edit/patch/delete` operator-owned objects (same exemption as
   pods — the controller recreates/repairs them).
 - **`keycloak/transformer-config.yaml`** (loaded via `configurations:` in

@@ -12,8 +12,8 @@ usage() {
 Usage: db-setup.sh [OPTIONS]
 
 Create the Keycloak PostgreSQL role and database on the shared postgres
-instance (postgres/). Run this BEFORE deploying Keycloak
-(kubectl apply -k keycloak/).
+instance (postgres/). Run this BEFORE deploying Keycloak, i.e. before
+`kubectl apply -k keycloak/operator/` and `kubectl apply -k keycloak/`.
 
 The role password is auto-detected from keycloak/.env (KC_DB_PASSWORD);
 override with --db-pass if needed.

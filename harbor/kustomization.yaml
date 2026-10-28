@@ -6,7 +6,7 @@
   helmCharts: [{
     name: "harbor",
     repo: "https://helm.goharbor.io",
-    version: "1.19.2", # Harbor OSS v2.15.2
+    version: "1.19.4", # Harbor OSS v2.15.4
     releaseName: "harbor",
     valuesFile: "values.yaml",
     additionalValuesFiles: [

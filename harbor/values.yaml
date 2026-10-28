@@ -1,5 +1,5 @@
 ---
-# Harbor configuration overrides (harbor-helm v1.19.2, Harbor OSS v2.15.2).
+# Harbor configuration overrides (harbor-helm v1.19.4, Harbor OSS v2.15.4).
 # Only non-default values are listed; see the upstream chart for all options:
 # https://github.com/goharbor/harbor-helm
 {

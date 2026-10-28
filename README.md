@@ -13,9 +13,9 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **vox** | Text-to-speech microservice (vLLM-Omni, OpenAI-compatible API; currently serves Qwen3-TTS) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
-| **harbor** | Container registry (Harbor OSS v2.15.2) | Kustomize (helmCharts) |
+| **harbor** | Container registry (Harbor OSS) | Kustomize (helmCharts) |
 | **keycloak-operator** | Keycloak Operator (manages the keycloak app) | Deployment, Kustomize |
-| **keycloak** | Identity and access management (Keycloak 26.7.2) | Keycloak CR (StatefulSet), Kustomize |
+| **keycloak** | Identity and access management (Keycloak) | Keycloak CR (StatefulSet), Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 | **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
 
@@ -61,8 +61,8 @@ kubectl apply -k hermes/
 
 ### Keycloak
 
-Keycloak is **operator-managed**: `keycloak-operator/` (Keycloak Operator
-26.7.2) owns the StatefulSet and services created from the `Keycloak` CR in
+Keycloak is **operator-managed**: `keycloak-operator/` (Keycloak Operator)
+owns the StatefulSet and services created from the `Keycloak` CR in
 `keycloak/`. Keycloak serves plain HTTP internally — TLS terminates at the
 shared Gateway. The admin console is at `https://keycloak.junjie.pro/admin`.
 State lives in the shared PostgreSQL from `postgres/` (no PVC).

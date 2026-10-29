@@ -3,7 +3,7 @@
   apiVersion: "apps/v1",
   kind: "Deployment",
   metadata: {
-    name: "llama-server",
+    name: "llama",
   },
   spec: {
     replicas: 1,
@@ -12,13 +12,13 @@
     },
     selector: {
       matchLabels: {
-        app: "llama-server",
+        app: "llama",
       },
     },
     template: {
       metadata: {
         labels: {
-          app: "llama-server",
+          app: "llama",
         },
       },
       spec: {
@@ -33,7 +33,7 @@
           },
         },
         containers: [{
-          name: "llama-server",
+          name: "llama",
           image: "ghcr.io/ggml-org/llama.cpp",
           ports: [{
             containerPort: 9931,
@@ -70,7 +70,7 @@
             value: "1",
           }, {
             name: "LLAMA_ARG_MODELS_PRESET",
-            value: "/etc/llama-server/models.ini",
+            value: "/etc/llama/models.ini",
           }, {
             name: "LLAMA_ARG_ENDPOINT_METRICS",
             value: "true",
@@ -83,12 +83,12 @@
           }],
           envFrom: [{
             secretRef: {
-              name: "llama-server-key",
+              name: "llama-key",
             },
           }],
           volumeMounts: [{
             name: "config",
-            mountPath: "/etc/llama-server",
+            mountPath: "/etc/llama",
             readOnly: true,
           }, {
             name: "models",

@@ -22,7 +22,7 @@
     prometheusSpec: {
       # Discover ServiceMonitors/PodMonitors/Probes/ScrapeConfigs from all
       # namespaces, not just those with the release label. This allows app-level
-      # ServiceMonitors (e.g. llama-server) to be picked up automatically.
+      # ServiceMonitors (e.g. llama) to be picked up automatically.
       serviceMonitorSelectorNilUsesHelmValues: false,
       podMonitorSelectorNilUsesHelmValues: false,
       probeSelectorNilUsesHelmValues: false,

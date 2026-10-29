@@ -23,20 +23,20 @@ cloudflared pod (3 replicas)
 ┌───────────────────────────────────────────────────────────┐
 │  Cilium Gateway  (namespace: gateway)                     │
 │                                                           │
-│  Listener: https (port 443, TLS *.junjie.pro)              │
-│    ← cloudflared / 局域网直连流量                           │
+│  Listener: https (port 443, TLS *.junjie.pro)             │
+│    ← cloudflared / 局域网直连流量                         │
 │                                                           │
 │  TLS 证书: cert-manager / letsencrypt-prod (DNS-01)       │
 │  固定 IP: 192.168.200.200                                 │
 └──────────┬────────────────────────────────────────────────┘
            │ HTTPRoute[host: *.junjie.pro]
-    ┌──────┴──────────────────────────────────────────────┐
-    │  Backend Services                                   │
-    │    • llama.junjie.pro              → llama-server:9931             │
+    ┌──────┴─────────────────────────────────────────────────────┐
+    │  Backend Services                                          │
+    │    • llama.junjie.pro              → llama:9931            │
     │    • grafana.junjie.pro → kube-prometheus-stack-grafana:80 │
-    │    • headlamp.junjie.pro → headlamp:80               │
-    │    • keycloak.junjie.pro → keycloak-service:8080      │
-    └─────────────────────────────────────────────────────┘
+    │    • headlamp.junjie.pro → headlamp:80                     │
+    │    • keycloak.junjie.pro → keycloak-service:8080           │
+    └────────────────────────────────────────────────────────────┘
 ```
 
 ## 流量来源
@@ -218,7 +218,7 @@ kubectl apply -k gateway/
 将所有 `httproute.yaml` 中的 hostname 从 `*.k8s.junjie.pro` 改为 `*.junjie.pro`，然后逐服务 apply：
 
 ```bash
-kubectl apply -k llama-server/
+kubectl apply -k llama/
 kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 ```
@@ -243,7 +243,7 @@ infrastructure/external-dns/deploy.sh
 在每个服务目录下新建 `dnsendpoint.yaml`，CNAME 指向 `e6e456ae-2397-4f56-a601-e6498091e030.cfargotunnel.com`，然后 apply：
 
 ```bash
-kubectl apply -k llama-server/
+kubectl apply -k llama/
 kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
 ```
@@ -299,7 +299,7 @@ k8s-apps/
     deployment.yaml          ConfigMap 挂载 + credentials 文件
     config.yaml              隧道入口规则
     credentials.json.example credentials 模板
-  llama-server/
+  llama/
     httproute.yaml           hostname: llama.junjie.pro
     dnsendpoint.yaml         CNAME → tunnel
   headlamp/

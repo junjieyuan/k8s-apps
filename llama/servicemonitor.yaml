@@ -3,12 +3,12 @@
   apiVersion: "monitoring.coreos.com/v1",
   kind: "ServiceMonitor",
   metadata: {
-    name: "llama-server",
+    name: "llama",
   },
   spec: {
     selector: {
       matchLabels: {
-        app: "llama-server",
+        app: "llama",
       },
     },
     endpoints: [{
@@ -25,7 +25,7 @@
         ],
       },
       bearerTokenSecret: {
-        name: "llama-server-key",
+        name: "llama-key",
         key: "LLAMA_API_KEY",
       },
     }],

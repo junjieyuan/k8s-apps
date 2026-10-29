@@ -3,14 +3,14 @@
   apiVersion: "v1",
   kind: "Service",
   metadata: {
-    name: "llama-server",
+    name: "llama",
     labels: {
-      app: "llama-server",
+      app: "llama",
     },
   },
   spec: {
     selector: {
-      app: "llama-server",
+      app: "llama",
     },
     ports: [{
       port: 9931,

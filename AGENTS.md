@@ -18,7 +18,7 @@ to verify idempotency.
 ## Directory structure
 
 Each app lives in its own directory. The canonical layout varies by stack:
-- **Plain YAML apps** (cloudflared, gateway, postgres, llama-server,
+- **Plain YAML apps** (cloudflared, gateway, postgres, llama,
   keycloak) — described in detail under Shell & tools. Direct deploy:
   `kubectl apply -k <app>/` (keycloak: apply `keycloak/operator/` first).
 - **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
@@ -107,7 +107,7 @@ be changed with one-off commands:
 - **Replica counts live in the manifests.** To scale an app, edit `replicas:`
   in its `deployment.yaml`, commit, then `kubectl apply -k <app>/`. Re-running
   the apply is the idempotency check.
-- **GPU apps are mutually exclusive** — llama-server, comfyui, and vox
+- **GPU apps are mutually exclusive** — llama, comfyui, and vox
   share one RTX 4080 (16GB) and cannot run inference at the same time.
   Switching the GPU owner means editing `replicas:` in the deployments
   (1 for the owner, 0 for the others) and applying each app. Never

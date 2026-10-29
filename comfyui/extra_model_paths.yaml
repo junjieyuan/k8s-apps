@@ -9,7 +9,7 @@
 # vae/loras. The split files live either at the snapshot root or under a
 # split_files/ subdir; base_path points at the dir that holds them.
 # All paths are inside the pod; /hf-cache is the GPU node's read-only virtiofs
-# HF hub cache shared with llama-server (no model data hits NFS).
+# HF hub cache shared with llama (no model data hits NFS).
 #
 # Snapshot hashes are pinned per repo (read from <repo>/refs/main on the host).
 # A repo update on the host changes the hash, so this file must be updated to

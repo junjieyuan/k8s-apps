@@ -7,7 +7,7 @@
   },
   spec: {
     # Mirrors the static PV (capacity, accessModes, storageClassName) so the two
-    # bind; same sizing as llama-server for consistency.
+    # bind; same sizing as llama for consistency.
     storageClassName: "local-models",
     accessModes: [
       "ReadOnlyMany",

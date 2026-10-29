@@ -31,7 +31,7 @@
         # exists on the NVIDIA node, so scheduling must match the volume's
         # node affinity. seLinuxOptions.type: spc_t makes CRI-O skip
         # SELinux relabeling of the read-only virtiofs cache (same fix as
-        # llama-server); relabeling would fail with EROFS. No fsGroup:
+        # llama); relabeling would fail with EROFS. No fsGroup:
         # the image runs as root.
         securityContext: {
           seLinuxOptions: {

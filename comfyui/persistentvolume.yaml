@@ -6,7 +6,7 @@
     name: "comfyui-hf-cache",
   },
   spec: {
-    # A second PV over the same host path as llama-server's llama-models: PVs are
+    # A second PV over the same host path as llama's llama-models: PVs are
     # cluster-scoped and bind to exactly one PVC, so ComfyUI needs its own PV/PVC
     # to reach the shared data. The path is a read-only virtiofs mount on the GPU
     # node (provisioned in k8s-cluster), so ReadOnlyMany matches reality.

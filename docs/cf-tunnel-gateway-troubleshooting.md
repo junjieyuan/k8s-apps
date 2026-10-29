@@ -9,7 +9,7 @@
 **解决方案**：更新以下文件中的 Tunnel ID：
 
 - `cloudflared/config.yaml`
-- `llama-server/dnsendpoint.yaml`
+- `llama/dnsendpoint.yaml`
 - `monitoring/dnsendpoint.yaml`
 - `headlamp/dnsendpoint.yaml`
 - `docs/cf-tunnel-gateway.md`

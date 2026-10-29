@@ -13,7 +13,6 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **vox** | Text-to-speech microservice (vLLM-Omni, OpenAI-compatible API; currently serves Qwen3-TTS) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
-| **keycloak** | Identity and access management (Keycloak + Operator) | Keycloak CR + Operator, Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 | **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
 
@@ -56,43 +55,6 @@ kubectl apply -k hermes/
 
 ```
 
-### Keycloak
-
-Keycloak is **operator-managed**: `keycloak/operator/` runs the Keycloak
-Operator, which owns the StatefulSet and services created from the `Keycloak`
-CR in `keycloak/`. Keycloak serves plain HTTP internally — TLS terminates at
-the shared Gateway. The admin console is at
-`https://keycloak.junjie.pro/admin`. State lives in the shared PostgreSQL from
-`postgres/` (no PVC).
-
-```bash
-# 1. Secret values (gitignored): DB role + master-realm bootstrap admin
-cp keycloak/.env.example keycloak/.env
-cp keycloak/.env-operator-admin.example keycloak/.env-operator-admin
-# edit both with real passwords
-
-# 2. Provision role + database on the shared postgres
-bash keycloak/db-setup.sh
-
-# 3. Operator first, then the app
-kubectl apply -k keycloak/operator/
-kubectl apply -k keycloak/
-
-# 4. One-shot realm import (not part of -k): apply, then delete the
-#    KeycloakRealmImport CR once status.conditions shows Done=True —
-#    the realm persists in the database
-kubectl apply -f keycloak/realms/prod-platform.yaml
-kubectl delete keycloakrealmimport -n keycloak prod-platform
-
-# 5. Add the hostname to the Cloudflare tunnel ingress
-kubectl apply -k cloudflared/
-```
-
-**Fresh-database rebuild:** on first start the pod bootstraps the
-`keycloak-operator` master-realm user (from `.env-operator-admin`), which
-also lets the operator authenticate; afterwards recreate `platform-admin`
-(the permanent human admin) via kcadm — it is not bootstrapped.
-
 ## Architecture
 
 ```
@@ -107,9 +69,8 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ vox.junjie.pro                → vox:8000
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
-                  ├─ keycloak.junjie.pro           → keycloak-service:8080
                   ├─ hermes.junjie.pro             → hermes:9119 (dashboard)
                   └─ hermes-webhook.junjie.pro     → hermes:8644 (webhook)
 
-  postgres (ClusterIP, no external route) → accessed internally by keycloak
+  postgres (ClusterIP, no external route)
 ```

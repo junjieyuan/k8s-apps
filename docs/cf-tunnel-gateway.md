@@ -35,7 +35,6 @@ cloudflared pod (3 replicas)
     │    • llama.junjie.pro              → llama:9931            │
     │    • grafana.junjie.pro → kube-prometheus-stack-grafana:80 │
     │    • headlamp.junjie.pro → headlamp:80                     │
-    │    • keycloak.junjie.pro → keycloak-service:8080           │
     └────────────────────────────────────────────────────────────┘
 ```
 

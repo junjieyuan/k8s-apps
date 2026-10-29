@@ -39,14 +39,6 @@
       originServerName: "grafana.junjie.pro",
     },
     {
-      hostname: "keycloak.junjie.pro",
-      service: "https://cilium-gateway-gateway.gateway:443",
-      originRequest: {
-        noTLSVerify: true,
-      },
-      originServerName: "keycloak.junjie.pro",
-    },
-    {
       hostname: "vox.junjie.pro",
       service: "https://cilium-gateway-gateway.gateway:443",
       originRequest: {

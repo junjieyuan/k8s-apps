@@ -13,7 +13,6 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **vox** | Text-to-speech microservice (vLLM-Omni, OpenAI-compatible API; currently serves Qwen3-TTS) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
-| **harbor** | Container registry (Harbor OSS) | Kustomize (helmCharts) |
 | **keycloak** | Identity and access management (Keycloak + Operator) | Keycloak CR + Operator, Kustomize |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 | **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
@@ -53,7 +52,6 @@ kubectl apply -k llama/
 kubectl apply -k comfyui/
 kubectl apply -k vox/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
-kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
 kubectl apply -k hermes/
 
 ```
@@ -95,26 +93,6 @@ kubectl apply -k cloudflared/
 also lets the operator authenticate; afterwards recreate `platform-admin`
 (the permanent human admin) via kcadm — it is not bootstrapped.
 
-### Harbor
-
-Harbor reuses the shared PostgreSQL from `postgres/` (no bundled database) and
-serves plain HTTP internally — TLS terminates at the shared Gateway. The
-registry endpoint is `harbor.junjie.pro` (docker login/pull/push), the UI is at
-`https://harbor.junjie.pro`.
-
-```bash
-# 1. Secret values (gitignored): admin password + DB role password
-cp harbor/values-secret.yaml.example harbor/values-secret.yaml
-# edit harbor/values-secret.yaml with real passwords (xsrfKey must be 32 chars)
-
-# 2. Provision role + database on the shared postgres, then deploy
-bash harbor/db-setup.sh
-kubectl kustomize --enable-helm harbor/ | kubectl apply -f -
-```
-
-Trivy scanning is disabled to keep the footprint small; to enable it later, set
-`trivy.enabled: true` in `harbor/values.yaml`.
-
 ## Architecture
 
 ```
@@ -129,7 +107,6 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ vox.junjie.pro                → vox:8000
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   ├─ headlamp.junjie.pro           → headlamp:80
-                  ├─ harbor.junjie.pro             → harbor:80 (nginx frontend)
                   ├─ keycloak.junjie.pro           → keycloak-service:8080
                   ├─ hermes.junjie.pro             → hermes:9119 (dashboard)
                   └─ hermes-webhook.junjie.pro     → hermes:8644 (webhook)

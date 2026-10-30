@@ -14,7 +14,6 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
-| **hermes** | Hermes Agent (dashboard + webhook) | Deployment, Kustomize |
 
 ## Prerequisites
 
@@ -51,7 +50,6 @@ kubectl apply -k llama/
 kubectl apply -k comfyui/
 kubectl apply -k vox/
 kubectl kustomize --enable-helm headlamp/ | kubectl apply -f -
-kubectl apply -k hermes/
 
 ```
 
@@ -68,9 +66,7 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
                   ├─ comfyui.junjie.pro            → comfyui:8188
                   ├─ vox.junjie.pro                → vox:8000
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
-                  ├─ headlamp.junjie.pro           → headlamp:80
-                  ├─ hermes.junjie.pro             → hermes:9119 (dashboard)
-                  └─ hermes-webhook.junjie.pro     → hermes:8644 (webhook)
+                  └─ headlamp.junjie.pro           → headlamp:80
 
   postgres (ClusterIP, no external route)
 ```

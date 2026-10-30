@@ -1,0 +1,26 @@
+---
+{
+  apiVersion: "monitoring.coreos.com/v1",
+  kind: "ServiceMonitor",
+  metadata: {
+    name: "strata",
+  },
+  spec: {
+    selector: {
+      matchLabels: {
+        app: "strata",
+      },
+    },
+    endpoints: [{
+      port: "http",
+      path: "/metrics",
+      interval: "30s",
+      # Everything but /health needs the API key, so scrape with the client
+      # key.
+      bearerTokenSecret: {
+        name: "strata-key",
+        key: "STRATA_API_KEY",
+      },
+    }],
+  },
+}

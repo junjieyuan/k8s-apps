@@ -1,0 +1,36 @@
+---
+{
+  # Same host HF cache as llama (virtiofs, read-only). A separate PV because
+  # one PV binds to a single PVC, i.e. a single namespace.
+  apiVersion: "v1",
+  kind: "PersistentVolume",
+  metadata: {
+    name: "strata-models",
+  },
+  spec: {
+    capacity: {
+      storage: "500Gi",
+    },
+    accessModes: [
+      "ReadOnlyMany",
+    ],
+    persistentVolumeReclaimPolicy: "Retain",
+    storageClassName: "local-models",
+    local: {
+      path: "/opt/models/huggingface",
+    },
+    nodeAffinity: {
+      required: {
+        nodeSelectorTerms: [{
+          matchExpressions: [{
+            key: "feature.node.kubernetes.io/pci-10de.present",
+            operator: "In",
+            values: [
+              "true",
+            ],
+          }],
+        }],
+      },
+    },
+  },
+}

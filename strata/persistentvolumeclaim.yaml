@@ -1,0 +1,19 @@
+---
+{
+  apiVersion: "v1",
+  kind: "PersistentVolumeClaim",
+  metadata: {
+    name: "strata-models",
+  },
+  spec: {
+    storageClassName: "local-models",
+    accessModes: [
+      "ReadOnlyMany",
+    ],
+    resources: {
+      requests: {
+        storage: "500Gi",
+      },
+    },
+  },
+}

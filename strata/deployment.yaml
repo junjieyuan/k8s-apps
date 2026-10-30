@@ -1,0 +1,157 @@
+---
+{
+  apiVersion: "apps/v1",
+  kind: "Deployment",
+  metadata: {
+    name: "strata",
+  },
+  spec: {
+    replicas: 0,
+    strategy: {
+      type: "Recreate",
+    },
+    selector: {
+      matchLabels: {
+        app: "strata",
+      },
+    },
+    template: {
+      metadata: {
+        labels: {
+          app: "strata",
+        },
+      },
+      spec: {
+        nodeSelector: {
+          feature.node.kubernetes.io/pci-10de.present: "true",
+        },
+        securityContext: {
+          # The cache is virtiofs with host labels; spc_t lets the container
+          # read it (same as llama).
+          seLinuxOptions: {
+            type: "spc_t",
+          },
+        },
+        # The engine frees VRAM on SIGTERM; tens of GB take longer than the
+        # 30 s default.
+        terminationGracePeriodSeconds: 120,
+        containers: [{
+          name: "strata",
+          image: "ghcr.io/niko1221/strata",
+          ports: [{
+            containerPort: 8080,
+            name: "http",
+          }],
+          env: [{
+            name: "FAMILY",
+            value: "qwen",
+          }, {
+            name: "MODEL",
+            value: "IQ2_XS",
+          }, {
+            # One model's shards inside the hub snapshot; the whole hub is
+            # mounted so its symlinks into ../../blobs resolve, and MODEL
+            # makes Strata follow them. Revision is refs/main at download.
+            name: "MODEL_PATH",
+            value: "/hf-hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ2_XS",
+          }, {
+            name: "CONTEXT",
+            value: "256k",
+          }, {
+            name: "VISION",
+            value: "off",
+          }, {
+            name: "API_KEY",
+            valueFrom: {
+              secretKeyRef: {
+                name: "strata-key",
+                key: "STRATA_API_KEY",
+              },
+            },
+          }],
+          resources: {
+            # No memory or CPU limit: Strata plans from the memory it can
+            # see, a limit makes it under-plan and get OOM-killed, and a CPU
+            # limit caps the expert worker pool. The request is at machine
+            # scale so the pod never lands on a node too small for it.
+            requests: {
+              cpu: "8",
+              memory: "40Gi",
+            },
+            limits: {
+              nvidia.com/gpu: 1,
+            },
+          },
+          securityContext: {
+            capabilities: {
+              # Pinned experts are mlock'd; the default RLIMIT_MEMLOCK would
+              # make the load fail.
+              add: [
+                "IPC_LOCK",
+              ],
+            },
+          },
+          volumeMounts: [{
+            name: "models",
+            mountPath: "/hf-hub",
+            readOnly: true,
+          }, {
+            name: "data",
+            mountPath: "/data",
+          }, {
+            name: "shm",
+            mountPath: "/dev/shm",
+          }],
+          # The first start prepares the pack (tens of minutes) and fetches
+          # the MTP draft layer; /health needs no API key.
+          startupProbe: {
+            httpGet: {
+              path: "/health",
+              port: 8080,
+            },
+            periodSeconds: 30,
+            failureThreshold: 120,
+          },
+          readinessProbe: {
+            httpGet: {
+              path: "/health",
+              port: 8080,
+            },
+            periodSeconds: 10,
+            failureThreshold: 3,
+          },
+          livenessProbe: {
+            httpGet: {
+              path: "/health",
+              port: 8080,
+            },
+            periodSeconds: 30,
+            failureThreshold: 3,
+          },
+        }],
+        volumes: [{
+          name: "models",
+          persistentVolumeClaim: {
+            claimName: "strata-models",
+          },
+        }, {
+          # Node-local SSD: the prepared pack is read at line speed on start,
+          # which NFS cannot sustain. Regenerable, so a wiped VM only costs a
+          # re-prepare.
+          name: "data",
+          hostPath: {
+            path: "/var/lib/strata",
+            type: "DirectoryOrCreate",
+          },
+        }, {
+          # The image's /dev/shm is 64 MB; upstream runs it with --shm-size 2g.
+          name: "shm",
+          emptyDir: {
+            medium: "Memory",
+            sizeLimit: "2Gi",
+          },
+        }],
+      },
+    },
+  },
+}

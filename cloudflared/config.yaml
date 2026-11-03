@@ -23,6 +23,14 @@
       originServerName: "llama.junjie.pro",
     },
     {
+      hostname: "strata.junjie.pro",
+      service: "https://cilium-gateway-gateway.gateway:443",
+      originRequest: {
+        noTLSVerify: true,
+      },
+      originServerName: "strata.junjie.pro",
+    },
+    {
       hostname: "headlamp.junjie.pro",
       service: "https://cilium-gateway-gateway.gateway:443",
       originRequest: {

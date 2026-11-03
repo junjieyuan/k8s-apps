@@ -1,0 +1,21 @@
+---
+{
+  apiVersion: "v1",
+  kind: "Service",
+  metadata: {
+    name: "strata",
+    labels: {
+      app: "strata",
+    },
+  },
+  spec: {
+    selector: {
+      app: "strata",
+    },
+    ports: [{
+      port: 8080,
+      targetPort: 8080,
+      name: "http",
+    }],
+  },
+}

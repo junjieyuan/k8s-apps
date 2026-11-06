@@ -44,16 +44,16 @@
           }],
           env: [{
             name: "FAMILY",
-            value: "qwen",
+            value: "unsloth",
           }, {
             name: "MODEL",
-            value: "IQ2_XS",
+            value: "UD-IQ1_M",
           }, {
             # One model's shards inside the hub snapshot; the whole hub is
             # mounted so its symlinks into ../../blobs resolve, and MODEL
             # makes Strata follow them. Revision is refs/main at download.
             name: "MODEL_PATH",
-            value: "/hf-hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ2_XS",
+            value: "/hf-hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/d96201194f103c906994f283f504209dc8d2a10c/UD-IQ1_M",
           }, {
             name: "CONTEXT",
             value: "256k",

@@ -18,7 +18,7 @@
   ],
   images: [{
     name: "ghcr.io/niko1221/strata",
-    newTag: "0.2.11-cuda13@sha256:871e1e79c063b240184b08075ba0676b6cd2585eac11f76a9d179f4739d2c857",
+    newTag: "0.2.12-cuda13@sha256:c3a853420670f4c0f5a948c2d9e9904af4cedf52b11bc8cf167602dc5c578bcc",
   }],
   secretGenerator: [{
     name: "strata-key",

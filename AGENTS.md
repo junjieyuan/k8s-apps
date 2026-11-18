@@ -186,10 +186,8 @@ unchanged.
   stay JSON. App-input data files mounted into pods (e.g.
   `vox/qwen3_tts.yaml`, the vLLM-Omni deploy config) keep the upstream
   format and are excluded from KYAML lint via `.yamlfmt`. Vendored Helm
-  chart sources under gitignored `*/charts/` are
-  third-party and are not reformatted. Dated plan docs under
-  `docs/superpowers/plans/` are historical records; their inline examples
-  keep the YAML style from when the plan was written.
+  chart sources under gitignored `*/charts/` are third-party and are not
+  reformatted.
 
 ### Gateway design
 

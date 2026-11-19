@@ -9,7 +9,6 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **gateway** | Shared Cilium Gateway + wildcard TLS certificate | Cilium Gateway API, cert-manager |
 | **cloudflared** | Cloudflare Tunnel client for external access | Deployment, Kustomize |
 | **llama** | llama.cpp inference server (multi-model router) | GPU (RTX 4080), Kustomize |
-| **strata** | Strata inference server | GPU (RTX 4080), Kustomize |
 | **comfyui** | ComfyUI image generation (stable diffusion / flux workflows) | GPU (RTX 4080), Kustomize |
 | **monitoring** | Prometheus + Grafana (kube-prometheus-stack) | Kustomize (helmCharts) |
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
@@ -23,7 +22,7 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 - `kubectl` configured
 - `helm` — required for apps using the Kustomize `helmCharts` generator (see the Applications table for which)
 - `yamlfmt` (google/yamlfmt) — formats YAML as KYAML (see AGENTS.md)
-- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama, comfyui, strata)
+- GPU worker node(s) with label `feature.node.kubernetes.io/pci-10de.present=true` (for llama and comfyui)
 
 ## Usage
 
@@ -45,7 +44,6 @@ kubectl kustomize --enable-helm monitoring/ | kubectl apply -f -
 # 3. Applications
 kubectl apply -k cloudflared/
 kubectl apply -k llama/
-kubectl apply -k strata/
 # comfyui: models are read-only from the shared host HF cache by design; there
 # is no persistent model storage (see comfyui/extra_model_paths.yaml).
 kubectl apply -k comfyui/
@@ -63,7 +61,6 @@ External → Cloudflare Edge ← cloudflared (3 replicas, tunnel)
           └─ Cilium Gateway (shared, namespace: gateway, pinned IP: 192.168.200.200)
               └─ HTTPRoute[host: *.junjie.pro]
                   ├─ llama.junjie.pro              → llama:9931
-                  ├─ strata.junjie.pro             → strata:8080
                   ├─ comfyui.junjie.pro            → comfyui:8188
                   ├─ grafana.junjie.pro            → kube-prometheus-stack-grafana:80
                   └─ headlamp.junjie.pro           → headlamp:80

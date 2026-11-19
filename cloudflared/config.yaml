@@ -47,14 +47,6 @@
       originServerName: "grafana.junjie.pro",
     },
     {
-      hostname: "vox.junjie.pro",
-      service: "https://cilium-gateway-gateway.gateway:443",
-      originRequest: {
-        noTLSVerify: true,
-      },
-      originServerName: "vox.junjie.pro",
-    },
-    {
       service: "http_status:404",
     },
   ],

@@ -12,8 +12,8 @@ live here.
 **The repo must be in full sync with the cluster** — every application
 resource running in the cluster must have a corresponding manifest or
 values file in this repo. No manual `kubectl` edits on the cluster that
-aren't reflected back into code. When in doubt, re-run `kubectl apply -k <app>`
-to verify idempotency.
+aren't reflected back into code. When in doubt, re-run the apply to
+verify idempotency.
 
 ## Directory structure
 
@@ -22,8 +22,7 @@ Each app lives in its own directory. The canonical layout varies by stack:
   described in detail under Shell & tools. Direct deploy:
   `kubectl apply -k <app>/`.
 - **Helm + Kustomize apps** (headlamp, monitoring) — described in detail
-  under Shell & tools. Deploy: `kubectl kustomize --enable-helm <app>/ |
-  kubectl apply -f -`.
+  under Shell & tools, which has the deploy command.
 
 Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
 
@@ -49,9 +48,8 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   - **Kustomize** (`kubectl apply -k`) is the default for all plain YAML
     apps. Variable injection (namespace, image tag) lives in
     `kustomization.yaml` via `namespace:` and `images.newTag:`. Plain YAML
-    files contain no `${VAR}` placeholders. Secrets use `secretGenerator`
-    with `.env` files (real values gitignored, `.env.example` committed as
-    template). Multi-environment apps use `base/` + `overlays/<env>/`.
+    files contain no `${VAR}` placeholders. Secrets per the Secrets
+    section below. Multi-environment apps use `base/` + `overlays/<env>/`.
   - **`helmCharts` generator** — when a Kustomization uses the built-in
     `helmCharts` field, it requires `--enable-helm`. **`kubectl apply -k`
     does NOT support `--enable-helm`**, so you must pipe:
@@ -71,10 +69,7 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
   a simple deployment + service + route, use plain Kustomize without
   `helmCharts`.
 - **KYAML for all YAML** — every `*.yaml` file in this repo is written in
-  KYAML, the flow-style YAML dialect from KEP 5295 (see KYAML style below).
-  Format with Google's `yamlfmt` using the repo-root `.yamlfmt` config:
-  `yamlfmt <file>` applies, `yamlfmt -dry <file>` previews, and
-  `yamlfmt -lint <dir>` is the CI/enforcement check.
+  KYAML; rules and `yamlfmt` formatting live in the KYAML style section.
 - **`SCRIPT_DIR` pattern** — `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
   for locating sibling files.
 
@@ -87,7 +82,9 @@ be changed with one-off commands:
   delete` to mutate manifest-managed resources** (deployments, services,
   PVCs/PVs, routes, namespaces, ...). These change the cluster without a
   manifest, and the next `kubectl apply -k` silently reverts them — the repo
-  and cluster drift apart.
+  and cluster drift apart. Replica counts live in the manifests: to scale an
+  app, edit `replicas:` in its manifest, commit, then apply; re-running the
+  apply is the idempotency check.
 - **Pods are exempt: they are controller-managed and never live in the repo.**
   Deleting a pod is remediation, not drift — the Deployment/ReplicaSet
   recreates it. Safe targets: stale `Unknown` pods after a node reboot (they
@@ -104,9 +101,6 @@ be changed with one-off commands:
 - **Node maintenance is not drift** — `cordon`/`uncordon`/`drain` change
   scheduling, not manifests. Coordinate with k8s-cluster: node lifecycle
   lives in that repo.
-- **Replica counts live in the manifests.** To scale an app, edit `replicas:`
-  in its `deployment.yaml`, commit, then `kubectl apply -k <app>/`. Re-running
-  the apply is the idempotency check.
 - **GPU apps are mutually exclusive** — llama and comfyui
   share one RTX 4080 (16GB) and cannot run inference at the same time.
   Switching the GPU owner means editing `replicas:` in the deployments

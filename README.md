@@ -14,6 +14,11 @@ Kubernetes application workloads deployed on the [k8s-cluster](https://github.co
 | **headlamp** | Kubernetes dashboard | Kustomize (helmCharts) |
 | **postgres** | PostgreSQL with persistent storage | StatefulSet, Kustomize |
 
+llama and comfyui are **mutually exclusive**: they share one RTX 4080
+(16GB) and cannot run inference at the same time. Switching the GPU owner
+means editing `replicas:` in the manifests (1 for the owner, 0 for the
+others) and applying each app — never `kubectl scale` to switch.
+
 ## Prerequisites
 
 - Running Kubernetes cluster (provisioned by [`k8s-cluster`](https://github.com/junjieyuan/k8s-cluster))

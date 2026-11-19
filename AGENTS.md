@@ -58,9 +58,8 @@ Shared infrastructure (Gateway, Certificate) lives in `gateway/`.
     if standalone kustomize is installed. Version pinning goes in the
     `helmCharts[].version` field; overrides in `valuesFile`. The generator
     renders only `templates/`, never `crds/`, so chart CRDs are not in
-    the deploy stream; deploy them per the project's CRD upgrade
-    documentation (e.g. kube-prometheus-stack: the chart repo's
-    UPGRADE.md).
+    the deploy stream; deploy them per the chart's CRD upgrade
+    documentation (see `README.md` for the per-app procedure).
 - **Helm** is used **only** via the Kustomize `helmCharts` generator
   — never `helm install` directly. This applies to complex charts
   (kube-prometheus-stack) and simple ones alike. The single exception is
@@ -101,11 +100,8 @@ be changed with one-off commands:
 - **Node maintenance is not drift** — `cordon`/`uncordon`/`drain` change
   scheduling, not manifests. Coordinate with k8s-cluster: node lifecycle
   lives in that repo.
-- **GPU apps are mutually exclusive** — llama and comfyui
-  share one RTX 4080 (16GB) and cannot run inference at the same time.
-  Switching the GPU owner means editing `replicas:` in the deployments
-  (1 for the owner, 0 for the others) and applying each app. Never
-  `kubectl scale` to switch.
+- **GPU apps are mutually exclusive** — see `README.md` for the switching
+  procedure. Never `kubectl scale` to switch.
 - **Decommissioning** — to remove an app, run `kubectl delete -k <app>/`
   first (while the manifests are still in the repo), then delete the
   manifests and commit. Plain `kubectl apply -k` never deletes resources
@@ -143,8 +139,6 @@ be changed with one-off commands:
   The digest is the `Docker-Content-Digest` the registry returns for the
   tag (`crane digest`, or the registry API header). A tag-only bump keeps
   pulling the old artifact — digest wins.
-- **Gateway API** — CRD version must match the version supported by the CNI
-  (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 
 ### KYAML style
 
@@ -186,6 +180,8 @@ unchanged.
   inside an application namespace.
 - **Gateway API over Ingress** — use `Gateway` + `HTTPRoute` from
   `gateway.networking.k8s.io/v1`.
+- **Gateway API** — CRD version must match the version supported by the CNI
+  (Cilium) and the `gateway.networking.k8s.io` API version used in manifests.
 - **TLS via cert-manager** — `ClusterIssuer` + `Certificate` for automatic
   Let's Encrypt provisioning and renewal.
 - **Wildcard TLS** — a single `*.domain` certificate covers all app hostnames

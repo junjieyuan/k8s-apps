@@ -59,13 +59,13 @@
           }],
           resources: {
             limits: {
-              nvidia.com/gpu: 1,
+              nvidia.com/gpu: "1",
               memory: "32Gi",
             },
             requests: {
-              nvidia.com/gpu: 1,
+              nvidia.com/gpu: "1",
               memory: "8Gi",
-              cpu: 2,
+              cpu: "2",
             },
           },
           env: [

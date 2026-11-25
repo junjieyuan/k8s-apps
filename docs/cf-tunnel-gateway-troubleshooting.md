@@ -6,13 +6,7 @@
 
 **原因**：Tunnel ID 不正确。架构规划时写的是旧 ID `432267fd-9c8a-4ac9-bd27-23491d919b79`，实际本地管理的 Tunnel ID 是 `e6e456ae-2397-4f56-a601-e6498091e030`。
 
-**解决方案**：更新以下文件中的 Tunnel ID：
-
-- `cloudflared/config.yaml`
-- `llama/dnsendpoint.yaml`
-- `monitoring/dnsendpoint.yaml`
-- `headlamp/dnsendpoint.yaml`
-- `docs/cf-tunnel-gateway.md`
+**解决方案**：将正确的 Tunnel ID 更新到所有引用它的清单与文档中。
 
 **教训**：本地管理的 Tunnel（`cloudflared tunnel create`）和 Dashboard 管理的 Tunnel ID 不同，迁移时需确认实际 ID。
 
@@ -60,7 +54,7 @@
 
 **原因**：`cilium-secrets` namespace 在某次操作中被删除。Cilium 的 Gateway API 控制器通过 SDS（Secret Discovery Service）将 TLS 证书从来源 namespace（`gateway`）同步到 `cilium-secrets`，然后 Envoy 从这里加载。namespace 不存在时整个链路中断。
 
-**解决方案**：重新运行仓库中的 Cilium 安装/升级脚本：
+**解决方案**：重新运行 k8s-cluster 仓库中的 Cilium 安装/升级脚本：
 
 ```bash
 kubectl kustomize --enable-helm infrastructure/cilium/ | kubectl apply -f -
@@ -112,7 +106,7 @@ x509: certificate is valid for *.junjie.pro, not cilium-gateway-gateway.gateway
 
 **现象**：实施过程中发现 `DNSEndpoint` CRD 不在集群中，临时手动安装。最初将 CRD YAML 复制到仓库。
 
-**原因**：没有意识到 Helm chart 的 `crds/` 目录已经包含了 CRD 定义，随 Kustomize `helmCharts` 一同缓存到了本地 `charts/external-dns-1.21.1/external-dns/crds/`。
+**原因**：没有意识到 Helm chart 的 `crds/` 目录已经包含了 CRD 定义，随 Kustomize `helmCharts` 一同缓存到了 k8s-cluster 仓库的 `charts/external-dns-<版本>/external-dns/crds/`。
 
 **解决方案**：
 
@@ -132,21 +126,4 @@ x509: certificate is valid for *.junjie.pro, not cilium-gateway-gateway.gateway
 
 **决策**：选用 credentials 方式，因为目标是将 ingress 规则移入仓库声明式管理。Token 方式不能使用本地 config.yaml。
 
-**注意事项**：
-
-- `credentials.json` 通过 `cloudflared tunnel login` + `cloudflared tunnel create` 获取
-- 该文件由 Kustomize `secretGenerator` 的 `files` 模式直接读取（不是 env 方式）
-- 已加入 `.gitignore`（`credentials.json`），`credentials.json.example` 提交作为模板
-- Tunnel ID 在 `config.yaml` 中硬编码（公开信息，无敏感性）
-
----
-
-## 部署后的验证结果
-
-| 服务 | URL | 状态 | 响应码 |
-|------|-----|------|--------|
-| Grafana | `grafana.junjie.pro` | ✅ | 302 → /login |
-| Headlamp | `headlamp.junjie.pro` | ✅ | 200 |
-| Llama | `llama.junjie.pro` | ✅ | 200 |
-
-所有服务公网可访问，cookie 域名统一为 `*.junjie.pro`。
+**注意事项**：凭证获取、`secretGenerator` `files` 模式、`.gitignore` 与 `.example` 模板等细节，见 `docs/cf-tunnel-gateway.md` 的凭证管理一节。
